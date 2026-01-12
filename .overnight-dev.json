@@ -1,0 +1,7 @@
+{
+  "testCommand": "python3 -m pytest tests/ -v --tb=short",
+  "lintCommand": "python3 -m ruff check src/ tests/",
+  "requireCoverage": false,
+  "autoFix": true,
+  "maxAttempts": 50
+}
