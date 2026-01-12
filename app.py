@@ -1,165 +1,580 @@
 """Streamlit UI for the Market Research Agent."""
 
 import asyncio
+
 import streamlit as st
 
 from src.models import ResearchBrief
 from src.orchestrator import ResearchOrchestrator
 
-
 # Page config
 st.set_page_config(
     page_title="Market Research Agent",
-    page_icon="🔍",
+    page_icon="📊",
     layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-st.title("🔍 Market Research Agent")
-st.markdown("*Professional-grade market research powered by 8 specialized AI agents*")
+# Custom CSS for Quantilope-inspired design
+st.markdown(
+    """
+<style>
+    /* Main theme colors */
+    :root {
+        --primary-teal: #00A6A0;
+        --primary-dark: #008C87;
+        --text-dark: #1a1a2e;
+        --text-gray: #666;
+        --bg-light: #f8fafa;
+        --white: #ffffff;
+    }
+
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Main container styling */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }
+
+    /* Hero section */
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: #666;
+        margin-bottom: 2rem;
+        font-weight: 400;
+    }
+
+    .teal-accent {
+        color: #00A6A0;
+    }
+
+    /* Card styling */
+    .intake-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        border: 1px solid #e8f4f3;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e8f4f3;
+    }
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0;
+    }
+
+    .card-subtitle {
+        font-size: 0.875rem;
+        color: #888;
+        margin: 0;
+    }
+
+    /* Stats section */
+    .stats-container {
+        display: flex;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .stat-box {
+        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        text-align: center;
+        flex: 1;
+        color: white;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    /* Progress wave styling */
+    .wave-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .wave-item.running {
+        border-left-color: #00A6A0;
+        background: #f0faf9;
+    }
+
+    .wave-item.complete {
+        border-left-color: #00A6A0;
+    }
+
+    .wave-item.error {
+        border-left-color: #ff4757;
+        background: #fff5f5;
+    }
+
+    .wave-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1rem;
+    }
+
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 166, 160, 0.3);
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 166, 160, 0.4);
+    }
+
+    /* Input styling */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div > div {
+        border-radius: 10px;
+        border: 2px solid #e8f4f3;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #00A6A0;
+        box-shadow: 0 0 0 3px rgba(0, 166, 160, 0.1);
+    }
+
+    /* Section divider */
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #e8f4f3 50%, transparent 100%);
+        margin: 3rem 0;
+    }
+
+    /* Feature badges */
+    .feature-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #e8f4f3;
+        color: #00A6A0;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Results section */
+    .results-header {
+        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+    }
+
+    .results-body {
+        background: white;
+        padding: 2rem;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Decorative dots */
+    .decorative-dots {
+        position: fixed;
+        top: 100px;
+        right: 50px;
+        width: 200px;
+        height: 200px;
+        opacity: 0.1;
+        z-index: -1;
+    }
+
+    /* Phase label */
+    .phase-label {
+        background: #00A6A0;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Radio button styling */
+    .stRadio > div {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background: white;
+        border-radius: 12px;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def render_hero():
+    """Render the hero section."""
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown(
+            """
+        <h1 class="hero-title">
+            The Most Advanced<br>
+            <span class="teal-accent">Market Research</span> Technology
+        </h1>
+        <p class="hero-subtitle">
+            Professional-grade market research powered by 8 specialized AI agents.
+            Get $25K-quality insights in minutes, not weeks.
+        </p>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        # Feature badges
+        st.markdown(
+            """
+        <div style="margin-bottom: 2rem;">
+            <span class="feature-badge">📊 8 AI Agents</span>
+            <span class="feature-badge">🔍 Source Verified</span>
+            <span class="feature-badge">📈 Deep Analysis</span>
+            <span class="feature-badge">⚡ Fast Results</span>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    with col2:
+        # Stats
+        st.markdown(
+            """
+        <div style="background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+                    border-radius: 16px; padding: 1.5rem; color: white; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700;">8+</div>
+            <div style="font-size: 0.875rem; opacity: 0.9;">Specialized Agents</div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+        st.markdown(
+            """
+        <div style="background: white; border-radius: 16px; padding: 1.5rem;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #00A6A0;">5</div>
+            <div style="font-size: 0.875rem; color: #666;">Research Waves</div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
 
 def create_intake_form():
-    """Create the 15-question intake form."""
+    """Create the 15-question intake form with modern card design."""
 
-    st.header("Research Intake")
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+
     st.markdown(
-        "Before I start researching, I need to understand your situation well enough "
-        "to give you $25K-quality insights."
+        """
+    <h2 style="font-size: 2rem; font-weight: 600; color: #1a1a2e; margin-bottom: 0.5rem;">
+        Research Intake
+    </h2>
+    <p style="color: #666; margin-bottom: 2rem;">
+        Tell us about your project. The more detail you provide, the better your research will be.
+    </p>
+    """,
+        unsafe_allow_html=True,
     )
 
     # Phase 1: The Offering
-    st.subheader("Phase 1: The Offering")
+    st.markdown(
+        """
+    <div class="intake-card">
+        <div class="card-header">
+            <div class="card-icon">💡</div>
+            <div>
+                <p class="card-title">Phase 1: The Offering</p>
+                <p class="card-subtitle">What are you building?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
     offering_what = st.text_input(
-        "1. What is it?",
+        "What is it?",
         placeholder="e.g., productivity app, online course, SaaS platform...",
         help="Product, service, course, marketplace, etc.",
     )
 
     offering_problem = st.text_area(
-        "2. What problem does it solve?",
+        "What problem does it solve?",
         placeholder="In one sentence, what pain point does this address?",
         height=80,
     )
 
-    offering_delivery = st.selectbox(
-        "3. How would it be delivered?",
-        options=[
-            "",
-            "Online/SaaS",
-            "Mobile app",
-            "In-person",
-            "Physical product",
-            "Course/Workshop",
-            "Consulting/Service",
-            "Marketplace",
-            "Other",
-        ],
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        offering_delivery = st.selectbox(
+            "How would it be delivered?",
+            options=[
+                "",
+                "Online/SaaS",
+                "Mobile app",
+                "In-person",
+                "Physical product",
+                "Course/Workshop",
+                "Consulting/Service",
+                "Marketplace",
+                "Other",
+            ],
+        )
 
-    offering_pricing = st.selectbox(
-        "4. Pricing model in mind?",
-        options=[
-            "",
-            "One-time purchase",
-            "Subscription",
-            "Tiered/Freemium",
-            "Usage-based",
-            "Not sure yet",
-        ],
-    )
+    with col2:
+        offering_pricing = st.selectbox(
+            "Pricing model in mind?",
+            options=[
+                "",
+                "One-time purchase",
+                "Subscription",
+                "Tiered/Freemium",
+                "Usage-based",
+                "Not sure yet",
+            ],
+        )
 
     # Phase 2: Customer Hypothesis
-    st.subheader("Phase 2: Customer Hypothesis")
+    st.markdown(
+        """
+    <div class="intake-card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">👥</div>
+            <div>
+                <p class="card-title">Phase 2: Customer Hypothesis</p>
+                <p class="card-subtitle">Who is your target audience?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
     target_customer = st.text_area(
-        "5. Who do you imagine buying this?",
+        "Who do you imagine buying this?",
         placeholder="Be specific - not just demographics, but their situation",
         height=100,
     )
 
     customer_conversations = st.text_area(
-        "6. Have you talked to any potential customers yet?",
+        "Have you talked to any potential customers yet?",
         placeholder="If yes, what did you learn? What surprised you? If no, that's fine.",
         height=80,
     )
 
     segments_include_exclude = st.text_input(
-        "7. Any segments to specifically INCLUDE or EXCLUDE?",
+        "Any segments to specifically INCLUDE or EXCLUDE?",
         placeholder="e.g., 'Focus on solopreneurs, exclude agencies'",
     )
 
     # Phase 3: Market Context
-    st.subheader("Phase 3: Market Context")
-
-    geography = st.text_input(
-        "8. What geographies or markets?",
-        placeholder="e.g., United States, UK, Global English-speaking...",
+    st.markdown(
+        """
+    <div class="intake-card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">🌍</div>
+            <div>
+                <p class="card-title">Phase 3: Market Context</p>
+                <p class="card-subtitle">Where and who are you competing with?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
     )
 
-    known_competitors = st.text_input(
-        "9. Competitors you're aware of?",
-        placeholder="Comma-separated, e.g., Notion, Asana, Monday.com",
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        geography = st.text_input(
+            "What geographies or markets?",
+            placeholder="e.g., United States, UK, Global English-speaking...",
+        )
+
+    with col2:
+        known_competitors = st.text_input(
+            "Competitors you're aware of?",
+            placeholder="Comma-separated, e.g., Notion, Asana, Monday.com",
+        )
 
     opportunity_thesis = st.text_area(
-        "10. Why do you believe there's an opportunity here?",
+        "Why do you believe there's an opportunity here?",
         placeholder="What's your thesis?",
         height=80,
     )
 
     # Phase 4: Business Reality
-    st.subheader("Phase 4: Business Reality")
-
-    stage = st.selectbox(
-        "11. What stage are you at?",
-        options=[
-            "",
-            "Exploring an idea",
-            "Committed to building, figuring out details",
-            "Already have something, looking to expand/pivot",
-            "Existing business entering new market",
-        ],
+    st.markdown(
+        """
+    <div class="intake-card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">🎯</div>
+            <div>
+                <p class="card-title">Phase 4: Business Reality</p>
+                <p class="card-subtitle">Where are you in your journey?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
     )
 
-    resources = st.text_input(
-        "12. Roughly, what resources do you have to execute?",
-        placeholder="e.g., 'bootstrapped solo founder', 'funded team of 10'",
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        stage = st.selectbox(
+            "What stage are you at?",
+            options=[
+                "",
+                "Exploring an idea",
+                "Committed to building, figuring out details",
+                "Already have something, looking to expand/pivot",
+                "Existing business entering new market",
+            ],
+        )
+
+    with col2:
+        resources = st.text_input(
+            "Roughly, what resources do you have to execute?",
+            placeholder="e.g., 'bootstrapped solo founder', 'funded team of 10'",
+        )
 
     # Phase 5: Research Priorities
-    st.subheader("Phase 5: Research Priorities")
+    st.markdown(
+        """
+    <div class="intake-card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">🔬</div>
+            <div>
+                <p class="card-title">Phase 5: Research Priorities</p>
+                <p class="card-subtitle">What do you most need to learn?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
     primary_question = st.text_area(
-        "13. What's the #1 question you need answered?",
+        "What's the #1 question you need answered?",
         placeholder="If this research only answered one thing well, what should it be?",
         height=80,
     )
 
     kill_criteria = st.text_area(
-        "14. What would make you decide NOT to proceed?",
+        "What would make you decide NOT to proceed?",
         placeholder="What are the kill criteria?",
         height=80,
     )
 
     already_known = st.text_area(
-        "15. What do you already know that I shouldn't waste time on?",
+        "What do you already know that I shouldn't waste time on?",
         placeholder="Any previous research, conversations, or insights?",
         height=80,
     )
 
     # Depth selection
-    st.subheader("Research Depth")
+    st.markdown(
+        """
+    <div class="intake-card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <div class="card-icon">⚙️</div>
+            <div>
+                <p class="card-title">Research Depth</p>
+                <p class="card-subtitle">How comprehensive should the analysis be?</p>
+            </div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
     depth = st.radio(
-        "How deep should I go?",
+        "Select research depth:",
         options=[
-            ("overview", "Solid overview (~20 min) - Good for early-stage exploration"),
-            ("thorough", "Thorough analysis (~45 min) - Comprehensive with recommendations"),
-            ("deep_dive", "Leave no stone unturned (~90 min) - Deep dive with extensive sourcing"),
+            ("overview", "🚀 Quick Overview — Solid foundation in ~20 minutes"),
+            ("thorough", "📊 Thorough Analysis — Comprehensive with recommendations (~45 min)"),
+            ("deep_dive", "🔬 Deep Dive — Leave no stone unturned (~90 min)"),
         ],
         format_func=lambda x: x[1],
         index=1,
+        label_visibility="collapsed",
     )
 
     return {
@@ -199,14 +614,26 @@ def validate_intake(data: dict) -> list[str]:
 
 
 def display_progress(wave_index: int, wave_name: str, status: str):
-    """Display progress for a wave."""
-    icons = {
-        "pending": "⏳",
-        "running": "🔄",
-        "complete": "✅",
-        "error": "❌",
+    """Display progress for a wave with modern styling."""
+    status_config = {
+        "pending": ("⏳", ""),
+        "running": ("🔄", "running"),
+        "complete": ("✅", "complete"),
+        "error": ("❌", "error"),
     }
-    st.write(f"{icons.get(status, '⏳')} {wave_name}")
+    icon, css_class = status_config.get(status, ("⏳", ""))
+
+    st.markdown(
+        f"""
+    <div class="wave-item {css_class}">
+        <div class="wave-icon">{icon}</div>
+        <div>
+            <div style="font-weight: 500; color: #1a1a2e;">{wave_name}</div>
+        </div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 async def run_research(brief: ResearchBrief):
@@ -223,7 +650,20 @@ async def run_research(brief: ResearchBrief):
         wave_statuses[wave_idx] = "running"
 
         with progress_placeholder.container():
-            st.subheader("Research Progress")
+            st.markdown(
+                """
+            <div class="intake-card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div>
+                        <p class="card-title">Research Progress</p>
+                        <p class="card-subtitle">AI agents are analyzing your market</p>
+                    </div>
+                </div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
             for idx, status in enumerate(wave_statuses):
                 display_progress(idx, orchestrator.get_wave_description(idx), status)
 
@@ -237,19 +677,35 @@ async def run_research(brief: ResearchBrief):
 
     # Display final results
     with results_placeholder.container():
-        st.header("Research Complete")
+        st.markdown(
+            """
+        <div class="results-header">
+            <h2 style="margin: 0; font-size: 1.5rem;">✨ Research Complete</h2>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                Your professional market research report is ready
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("<div class='results-body'>", unsafe_allow_html=True)
 
         if "OpportunitySynthesizer" in orchestrator.results:
             report = orchestrator.results["OpportunitySynthesizer"]
             if isinstance(report, dict) and "report" in report:
                 st.markdown(report["report"])
+            elif isinstance(report, dict) and "response" in report:
+                st.markdown(report["response"])
             else:
                 st.json(report)
 
         if "SourceVerifier" in orchestrator.results:
             verification = orchestrator.results["SourceVerifier"]
-            with st.expander("Source Verification Details"):
+            with st.expander("🔍 Source Verification Details"):
                 st.json(verification)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     return orchestrator.results
 
@@ -264,51 +720,57 @@ def main():
     if "results" not in st.session_state:
         st.session_state.results = None
 
+    # Hero section
+    render_hero()
+
     # Intake form
     intake_data = create_intake_form()
 
     # Confirmation section
-    st.markdown("---")
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 4])
-
-    with col1:
-        start_button = st.button("🚀 Start Research", type="primary", use_container_width=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        if start_button:
-            errors = validate_intake(intake_data)
-            if errors:
-                for error in errors:
-                    st.error(error)
-            else:
-                # Create brief
-                brief = ResearchBrief(
-                    offering_what=intake_data["offering_what"],
-                    offering_problem=intake_data["offering_problem"],
-                    target_customer=intake_data["target_customer"],
-                    geography=intake_data["geography"],
-                    primary_question=intake_data["primary_question"],
-                    offering_delivery=intake_data["offering_delivery"],
-                    offering_pricing_model=intake_data["offering_pricing_model"],
-                    customer_conversations=intake_data["customer_conversations"],
-                    segments_include_exclude=intake_data["segments_include_exclude"],
-                    known_competitors=intake_data["known_competitors"],
-                    opportunity_thesis=intake_data["opportunity_thesis"],
-                    stage=intake_data["stage"],
-                    resources=intake_data["resources"],
-                    kill_criteria=intake_data["kill_criteria"],
-                    already_known=intake_data["already_known"],
-                    depth=intake_data["depth"],
-                )
+        start_button = st.button(
+            "🚀 Start Research",
+            type="primary",
+            use_container_width=True,
+        )
 
-                # Show confirmation
-                with st.expander("Research Brief (Click to review)", expanded=True):
-                    st.markdown(brief.to_markdown())
+    if start_button:
+        errors = validate_intake(intake_data)
+        if errors:
+            for error in errors:
+                st.error(error)
+        else:
+            # Create brief
+            brief = ResearchBrief(
+                offering_what=intake_data["offering_what"],
+                offering_problem=intake_data["offering_problem"],
+                target_customer=intake_data["target_customer"],
+                geography=intake_data["geography"],
+                primary_question=intake_data["primary_question"],
+                offering_delivery=intake_data["offering_delivery"],
+                offering_pricing_model=intake_data["offering_pricing_model"],
+                customer_conversations=intake_data["customer_conversations"],
+                segments_include_exclude=intake_data["segments_include_exclude"],
+                known_competitors=intake_data["known_competitors"],
+                opportunity_thesis=intake_data["opportunity_thesis"],
+                stage=intake_data["stage"],
+                resources=intake_data["resources"],
+                kill_criteria=intake_data["kill_criteria"],
+                already_known=intake_data["already_known"],
+                depth=intake_data["depth"],
+            )
 
-                # Run the research
-                st.session_state.research_started = True
-                st.session_state.results = asyncio.run(run_research(brief))
+            # Show brief summary
+            with st.expander("📋 Research Brief Summary", expanded=False):
+                st.markdown(brief.to_markdown())
+
+            # Run the research
+            st.session_state.research_started = True
+            st.session_state.results = asyncio.run(run_research(brief))
 
 
 if __name__ == "__main__":
