@@ -19,12 +19,12 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    /* Main theme colors */
+    /* Main theme colors - WCAG 2.1 AA compliant */
     :root {
-        --primary-teal: #00A6A0;
-        --primary-dark: #008C87;
+        --primary-teal: #007A75;  /* Darkened for better contrast */
+        --primary-dark: #006560;
         --text-dark: #1a1a2e;
-        --text-gray: #666;
+        --text-secondary: #4a5568;  /* 7:1 contrast on white */
         --bg-light: #f8fafa;
         --white: #ffffff;
     }
@@ -52,13 +52,13 @@ st.markdown(
 
     .hero-subtitle {
         font-size: 1.25rem;
-        color: #666;
+        color: #4a5568;  /* WCAG AA compliant - 7:1 contrast on white */
         margin-bottom: 2rem;
         font-weight: 400;
     }
 
     .teal-accent {
-        color: #00A6A0;
+        color: #007A75;  /* Darkened teal for better contrast */
     }
 
     /* Card styling */
@@ -82,7 +82,7 @@ st.markdown(
     .card-icon {
         width: 48px;
         height: 48px;
-        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -100,7 +100,7 @@ st.markdown(
 
     .card-subtitle {
         font-size: 0.875rem;
-        color: #888;
+        color: #5a6777;  /* WCAG AA compliant - 5.5:1 contrast on white */
         margin: 0;
     }
 
@@ -112,12 +112,12 @@ st.markdown(
     }
 
     .stat-box {
-        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
+        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
         border-radius: 16px;
         padding: 1.5rem 2rem;
         text-align: center;
         flex: 1;
-        color: white;
+        color: #ffffff;
     }
 
     .stat-number {
@@ -128,7 +128,7 @@ st.markdown(
 
     .stat-label {
         font-size: 0.875rem;
-        opacity: 0.9;
+        color: #ffffff;  /* Full white for accessibility */
     }
 
     /* Progress wave styling */
@@ -144,12 +144,12 @@ st.markdown(
     }
 
     .wave-item.running {
-        border-left-color: #00A6A0;
-        background: #f0faf9;
+        border-left-color: #007A75;
+        background: #e8f5f4;
     }
 
     .wave-item.complete {
-        border-left-color: #00A6A0;
+        border-left-color: #007A75;
     }
 
     .wave-item.error {
@@ -168,22 +168,28 @@ st.markdown(
         font-size: 1rem;
     }
 
-    /* Button styling */
+    /* Button styling - WCAG AA compliant */
     .stButton > button {
-        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
-        color: white;
+        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
+        color: #ffffff;
         border: none;
         border-radius: 12px;
         padding: 0.875rem 2.5rem;
         font-size: 1.1rem;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 166, 160, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 122, 117, 0.3);
     }
 
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 166, 160, 0.4);
+        box-shadow: 0 6px 20px rgba(0, 122, 117, 0.4);
+        background: linear-gradient(135deg, #006560 0%, #007A75 100%);
+    }
+
+    .stButton > button:focus {
+        outline: 3px solid #007A75;
+        outline-offset: 2px;
     }
 
     /* Input styling */
@@ -198,8 +204,9 @@ st.markdown(
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #00A6A0;
-        box-shadow: 0 0 0 3px rgba(0, 166, 160, 0.1);
+        border-color: #007A75;
+        box-shadow: 0 0 0 3px rgba(0, 122, 117, 0.2);
+        outline: none;
     }
 
     /* Section divider */
@@ -209,24 +216,24 @@ st.markdown(
         margin: 3rem 0;
     }
 
-    /* Feature badges */
+    /* Feature badges - WCAG AA compliant */
     .feature-badge {
         display: inline-flex;
         align-items: center;
-        background: #e8f4f3;
-        color: #00A6A0;
+        background: #e0f2f1;
+        color: #00695c;  /* Dark teal - 5.4:1 contrast on light bg */
         padding: 0.5rem 1rem;
         border-radius: 100px;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         margin-right: 0.5rem;
         margin-bottom: 0.5rem;
     }
 
     /* Results section */
     .results-header {
-        background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
-        color: white;
+        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
+        color: #ffffff;
         padding: 2rem;
         border-radius: 16px 16px 0 0;
         margin-bottom: 0;
@@ -252,8 +259,8 @@ st.markdown(
 
     /* Phase label */
     .phase-label {
-        background: #00A6A0;
-        color: white;
+        background: #007A75;
+        color: #ffffff;
         padding: 0.25rem 0.75rem;
         border-radius: 100px;
         font-size: 0.75rem;
@@ -273,6 +280,62 @@ st.markdown(
     .streamlit-expanderHeader {
         background: white;
         border-radius: 12px;
+    }
+
+    /* Accessibility enhancements */
+    /* Ensure focus is visible on all interactive elements */
+    a:focus, button:focus, input:focus, textarea:focus, select:focus {
+        outline: 3px solid #007A75;
+        outline-offset: 2px;
+    }
+
+    /* Ensure sufficient line height for readability */
+    p, li, label {
+        line-height: 1.6;
+    }
+
+    /* Skip link for keyboard navigation */
+    .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #007A75;
+        color: #ffffff;
+        padding: 8px 16px;
+        z-index: 100;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .skip-link:focus {
+        top: 0;
+    }
+
+    /* Ensure placeholder text has sufficient contrast */
+    ::placeholder {
+        color: #6b7280;  /* 4.5:1 contrast ratio */
+        opacity: 1;
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .intake-card {
+            border: 2px solid #1a1a2e;
+        }
+        .wave-item {
+            border-left-width: 6px;
+        }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        .stButton > button,
+        .wave-item {
+            transition: none;
+        }
+        .stButton > button:hover {
+            transform: none;
+        }
     }
 </style>
 """,
@@ -316,10 +379,11 @@ def render_hero():
         # Stats
         st.markdown(
             """
-        <div style="background: linear-gradient(135deg, #00A6A0 0%, #00C4BD 100%);
-                    border-radius: 16px; padding: 1.5rem; color: white; text-align: center;">
+        <div style="background: linear-gradient(135deg, #007A75 0%, #009690 100%);
+                    border-radius: 16px; padding: 1.5rem; color: white; text-align: center;"
+             role="region" aria-label="Statistics">
             <div style="font-size: 2.5rem; font-weight: 700;">8+</div>
-            <div style="font-size: 0.875rem; opacity: 0.9;">Specialized Agents</div>
+            <div style="font-size: 0.875rem; color: #ffffff;">Specialized Agents</div>
         </div>
         """,
             unsafe_allow_html=True,
@@ -329,8 +393,8 @@ def render_hero():
             """
         <div style="background: white; border-radius: 16px; padding: 1.5rem;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #00A6A0;">5</div>
-            <div style="font-size: 0.875rem; color: #666;">Research Waves</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #007A75;">5</div>
+            <div style="font-size: 0.875rem; color: #4a5568;">Research Waves</div>
         </div>
         """,
             unsafe_allow_html=True,
@@ -347,7 +411,7 @@ def create_intake_form():
     <h2 style="font-size: 2rem; font-weight: 600; color: #1a1a2e; margin-bottom: 0.5rem;">
         Research Intake
     </h2>
-    <p style="color: #666; margin-bottom: 2rem;">
+    <p style="color: #4a5568; margin-bottom: 2rem;">
         Tell us about your project. The more detail you provide, the better your research will be.
     </p>
     """,
@@ -679,9 +743,9 @@ async def run_research(brief: ResearchBrief):
     with results_placeholder.container():
         st.markdown(
             """
-        <div class="results-header">
-            <h2 style="margin: 0; font-size: 1.5rem;">✨ Research Complete</h2>
-            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+        <div class="results-header" role="banner">
+            <h2 style="margin: 0; font-size: 1.5rem; color: #ffffff;">Research Complete</h2>
+            <p style="margin: 0.5rem 0 0 0; color: #ffffff;">
                 Your professional market research report is ready
             </p>
         </div>
