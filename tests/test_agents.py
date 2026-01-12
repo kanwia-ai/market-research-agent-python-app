@@ -1,11 +1,20 @@
 """Tests for research sub-agents."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from src.agents import SubAgent, CommunityMapper, VoiceMiner, PricingIntel
-from src.agents import CompetitorProfiler, LocalContext, TrendDetector
-from src.agents import OpportunitySynthesizer, SourceVerifier
+import pytest
+
+from src.agents import (
+    CommunityMapper,
+    CompetitorProfiler,
+    LocalContext,
+    OpportunitySynthesizer,
+    PricingIntel,
+    SourceVerifier,
+    SubAgent,
+    TrendDetector,
+    VoiceMiner,
+)
 from src.models import ResearchBrief
 
 

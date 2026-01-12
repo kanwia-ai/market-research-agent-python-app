@@ -1,7 +1,6 @@
 """Research sub-agents for market research."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 from src.models import ResearchBrief
 
