@@ -1,10 +1,11 @@
 """Tests for the research orchestrator."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
-from src.orchestrator import ResearchOrchestrator
+import pytest
+
 from src.models import ResearchBrief
+from src.orchestrator import ResearchOrchestrator
 
 
 @pytest.fixture
