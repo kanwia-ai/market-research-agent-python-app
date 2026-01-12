@@ -4,13 +4,12 @@ import io
 import json
 import zipfile
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import markdown2
 from docx import Document
-from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt
 
 
 def markdown_to_html(markdown_content: str) -> str:

@@ -10,24 +10,22 @@ from src.models import ResearchBrief
 
 # Depth-based search configuration
 # Based on Anthropic's deep research protocol: multi-round, iterative, exhaustive
+# NOTE: No arbitrary minimums - depth determines WHEN to stop, not minimum counts
 SEARCH_CONFIG = {
     "overview": {
-        "min_sources": 10,
-        "target_sources": 20,
-        "search_rounds": 2,
-        "description": "Quick but thorough initial sweep",
+        "stop_when": "Major platforms covered, obvious sources found",
+        "behavior": "Find the prominent, obvious sources quickly",
+        "description": "Quick sweep of the landscape",
     },
     "thorough": {
-        "min_sources": 20,
-        "target_sources": 50,
-        "search_rounds": 4,
-        "description": "Comprehensive multi-round investigation",
+        "stop_when": "Search variations returning mostly duplicates",
+        "behavior": "Comprehensive coverage, follow leads, check secondary sources",
+        "description": "Diligent researcher-level thoroughness",
     },
     "deep_dive": {
-        "min_sources": 50,
-        "target_sources": 100,
-        "search_rounds": 6,
-        "description": "Exhaustive investigation leaving no stone unturned",
+        "stop_when": "Literally run out of new things to search",
+        "behavior": "EXHAUSTIVE - leave no stone unturned, find EVERYTHING",
+        "description": "Would bet money nothing significant left to find",
     },
 }
 
@@ -41,61 +39,65 @@ def get_vicious_search_instructions(depth: str, agent_type: str) -> str:
 
 You are conducting {depth.replace('_', ' ').upper()} research. Be RELENTLESS.
 
-### Source Requirements
-- **MINIMUM:** {config['min_sources']} unique, verified sources with URLs
-- **TARGET:** {config['target_sources']}+ sources for excellence
-- **SEARCH ROUNDS:** {config['search_rounds']} iterative rounds
+**Philosophy:** Never be satisfied with "enough." Find EVERYTHING that exists, not arbitrary minimums.
+
+### Your Depth Level: {depth.replace('_', ' ').title()}
+- **Behavior:** {config['behavior']}
+- **Stop when:** {config['stop_when']}
+
+### The Right Mindset
+**Wrong:** "I need X sources, I have X, I'm done."
+**Right:** "Have I found everything that exists? What might I be missing?"
+
+The question is never "do I have enough?" — it's "is there more out there?"
 
 ### Multi-Round Search Strategy
 
-**Round 1 — Initial Sweep:**
-- Cast wide net with primary search queries
-- Document ALL relevant sources found
+**Round 1 — Cast the Net:**
+- Start with obvious search queries
+- Check all major platforms
+- Document everything you find
 - Note promising leads for deeper investigation
 
-**Round 2 — Follow the Leads:**
-- For EACH promising source from Round 1, investigate further
-- Find sources CITED BY your initial sources (source pyramiding)
-- Expand query terms based on terminology discovered
+**Round 2 — Follow Every Lead:**
+- For each source found, ask: "What else does this lead to?"
+- Check who's mentioned, what's linked, what's referenced
+- Expand queries based on terminology you discovered
+- Try platform-specific searches
 
-**Round 3+ — Exhaustive Coverage:**
-- Search variations: synonyms, related terms, regional variations
-- Check competitor mentions, industry reports, academic sources
-- Mine social platforms: Reddit threads, Twitter discussions, LinkedIn posts
-- Find niche forums, Slack communities, Discord servers
-- Search in different date ranges to find historical context
+**Round 3 — Source Pyramiding:**
+- For valuable sources, find THEIR sources
+- If an article cites a report, find that report
+- If a Reddit thread mentions a Discord, find that Discord
+- If someone references "the Facebook group," find it
 
-### Query Expansion Techniques
-- Start: "[main topic] [geography]"
-- Expand: "[related term] [geography] [year]"
-- Deepen: "[specific company/person mentioned] review"
-- Pyramid: Search for sources cited in articles you find
+**Round 4+ — Exhaust the Search Space:**
+- Try every query variation you can think of
+- Search with typos, abbreviations, slang terms
+- Check different date ranges
+- Look for regional/local versions
+- Search adjacent topics that might mention your target
 
-### Source Diversity Requirements
-Gather sources from MULTIPLE categories:
-- Social media discussions (Reddit, Twitter/X, LinkedIn)
-- Review platforms (G2, Capterra, Trustpilot, app stores)
-- Industry publications and reports
-- News articles and press releases
-- Company websites and pricing pages
-- Government/institutional data
-- Academic papers (if relevant)
-- Forum discussions and community posts
-- YouTube comments and video descriptions
-- Podcast transcripts and show notes
+### Source Diversity
+Don't over-index on one platform. Check ALL relevant:
+- Social (Reddit, Twitter/X, LinkedIn, Facebook)
+- Content (YouTube, TikTok, Podcasts)
+- Professional (G2, Capterra, Trustpilot, industry forums)
+- Regional/Niche (local platforms, Discord, Telegram, Slack)
+- Reference (news, reports, academic, government data)
 
 ### CRITICAL: No Source = No Claim
 - Every single data point needs a URL
 - If you can't find a source, DON'T include the claim
 - Quality sources only — no guessing, no fabricating
-- Include access date for time-sensitive data
 
-### Stopping Criteria
-Do NOT stop searching until you have:
-✓ At least {config['min_sources']} verified sources with URLs
-✓ Sources from at least 5 different platform types
-✓ Completed all {config['search_rounds']} search rounds
-✓ Exhausted obvious query variations
+### Completeness Checklist (Before Stopping)
+☐ Searched all relevant platforms for this topic?
+☐ Tried multiple query variations?
+☐ Followed up on leads from initial findings?
+☐ Checked sources mentioned within sources?
+☐ Searches returning mostly duplicates now?
+{"☐ Would you bet money there's nothing significant left?" if depth == "deep_dive" else ""}
 """
 
 

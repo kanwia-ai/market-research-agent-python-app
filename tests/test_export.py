@@ -4,13 +4,11 @@ import json
 import zipfile
 from io import BytesIO
 
-import pytest
-
 from src.export import (
-    markdown_to_html,
-    export_to_docx,
     create_asset_bundle,
+    export_to_docx,
     get_filename_from_title,
+    markdown_to_html,
 )
 
 
