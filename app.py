@@ -18,7 +18,15 @@ st.set_page_config(
 # Custom CSS for Quantilope-inspired design
 st.markdown(
     """
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+    /* Apply Inter font globally */
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
     /* Main theme colors - WCAG 2.1 AA compliant */
     :root {
         --primary-teal: #007A75;  /* Darkened for better contrast */
@@ -34,41 +42,110 @@ st.markdown(
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
+    /* Force light theme with subtle gradient background */
+    .stApp, .main, [data-testid="stAppViewContainer"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f0fdf9 50%, #ecfdf5 100%) !important;
+        background-attachment: fixed !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #f8fafa !important;
+    }
+
+    /* Decorative background pattern */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle at center, rgba(0, 122, 117, 0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .stApp::after {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle at center, rgba(0, 150, 144, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Force text colors on all elements */
+    .stApp, .main, p, span, div, label, h1, h2, h3, h4, h5, h6 {
+        color: #1a1a2e !important;
+    }
+
+    /* Override Streamlit's default label styling */
+    .stTextInput label, .stTextArea label, .stSelectbox label, .stRadio label {
+        color: #1a1a2e !important;
+        font-weight: 500 !important;
+    }
+
     /* Main container styling */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 1200px;
+        background-color: #ffffff !important;
     }
 
     /* Hero section */
     .hero-title {
-        font-size: 3rem;
+        font-size: 3.25rem;
         font-weight: 700;
-        color: #1a1a2e;
-        margin-bottom: 0.5rem;
-        line-height: 1.2;
+        color: #1a1a2e !important;
+        margin-bottom: 0.75rem;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
     }
 
     .hero-subtitle {
         font-size: 1.25rem;
-        color: #4a5568;  /* WCAG AA compliant - 7:1 contrast on white */
+        color: #4a5568 !important;
         margin-bottom: 2rem;
         font-weight: 400;
+        line-height: 1.6;
     }
 
     .teal-accent {
-        color: #007A75;  /* Darkened teal for better contrast */
+        color: #007A75 !important;
+        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    /* Card styling */
+    /* Card styling - elevated with depth */
     .intake-card {
-        background: white;
-        border-radius: 16px;
+        background: linear-gradient(145deg, #ffffff 0%, #fafffe 100%);
+        border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        box-shadow:
+            0 4px 6px rgba(0, 122, 117, 0.04),
+            0 10px 40px rgba(0, 122, 117, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
         margin-bottom: 1.5rem;
-        border: 1px solid #e8f4f3;
+        border: 1px solid rgba(0, 122, 117, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .intake-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #007A75, #00a896, #007A75);
+        background-size: 200% 100%;
     }
 
     .card-header {
@@ -76,19 +153,20 @@ st.markdown(
         align-items: center;
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #e8f4f3;
+        border-bottom: 2px solid rgba(0, 122, 117, 0.1);
     }
 
     .card-icon {
-        width: 48px;
-        height: 48px;
-        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
-        border-radius: 12px;
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 1rem;
         font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 122, 117, 0.3);
     }
 
     .card-title {
@@ -135,115 +213,191 @@ st.markdown(
     .wave-item {
         display: flex;
         align-items: center;
-        padding: 1rem 1.5rem;
-        background: white;
-        border-radius: 12px;
+        padding: 1.125rem 1.5rem;
+        background: linear-gradient(145deg, #ffffff 0%, #fafffe 100%);
+        border-radius: 14px;
         margin-bottom: 0.75rem;
-        border-left: 4px solid #e0e0e0;
-        transition: all 0.3s ease;
+        border-left: 5px solid #e0e7e6;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .wave-item.running {
         border-left-color: #007A75;
-        background: #e8f5f4;
+        background: linear-gradient(145deg, #e8f7f6 0%, #d8f3f1 100%);
+        box-shadow: 0 4px 15px rgba(0, 122, 117, 0.15);
+        animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+        0%, 100% { border-left-color: #007A75; }
+        50% { border-left-color: #00a896; }
     }
 
     .wave-item.complete {
         border-left-color: #007A75;
+        background: linear-gradient(145deg, #f0fdf9 0%, #e8f7f6 100%);
     }
 
     .wave-item.error {
-        border-left-color: #ff4757;
-        background: #fff5f5;
+        border-left-color: #dc2626;
+        background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
     }
 
     .wave-icon {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 1rem;
-        font-size: 1rem;
+        font-size: 1.125rem;
     }
 
-    /* Button styling - WCAG AA compliant */
+    /* Button styling - WCAG AA compliant with polish */
     .stButton > button {
-        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
-        color: #ffffff;
+        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
+        color: #ffffff !important;
         border: none;
-        border-radius: 12px;
-        padding: 0.875rem 2.5rem;
+        border-radius: 14px;
+        padding: 1rem 3rem;
         font-size: 1.1rem;
         font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 122, 117, 0.3);
+        font-family: 'Inter', sans-serif !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+            0 4px 15px rgba(0, 122, 117, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
     }
 
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 122, 117, 0.4);
-        background: linear-gradient(135deg, #006560 0%, #007A75 100%);
+        transform: translateY(-3px);
+        box-shadow:
+            0 8px 25px rgba(0, 122, 117, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        background: linear-gradient(135deg, #006963 0%, #007A75 100%);
+    }
+
+    .stButton > button:hover::before {
+        left: 100%;
     }
 
     .stButton > button:focus {
         outline: 3px solid #007A75;
-        outline-offset: 2px;
+        outline-offset: 3px;
     }
 
-    /* Input styling */
+    .stButton > button:active {
+        transform: translateY(-1px);
+    }
+
+    /* Input styling - force light backgrounds */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
     .stSelectbox > div > div > div {
         border-radius: 10px;
-        border: 2px solid #e8f4f3;
+        border: 2px solid #d1d5db !important;
         padding: 0.75rem 1rem;
         font-size: 1rem;
+        background-color: #ffffff !important;
+        color: #1a1a2e !important;
     }
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #007A75;
+        border-color: #007A75 !important;
         box-shadow: 0 0 0 3px rgba(0, 122, 117, 0.2);
         outline: none;
     }
 
-    /* Section divider */
-    .section-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent 0%, #e8f4f3 50%, transparent 100%);
-        margin: 3rem 0;
+    /* Selectbox dropdown styling */
+    .stSelectbox > div > div {
+        background-color: #ffffff !important;
     }
 
-    /* Feature badges - WCAG AA compliant */
+    .stSelectbox [data-baseweb="select"] {
+        background-color: #ffffff !important;
+    }
+
+    .stSelectbox [data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        color: #1a1a2e !important;
+    }
+
+    /* Section divider */
+    .section-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(0, 122, 117, 0.2) 25%, rgba(0, 122, 117, 0.3) 50%, rgba(0, 122, 117, 0.2) 75%, transparent 100%);
+        margin: 3rem 0;
+        border-radius: 2px;
+    }
+
+    /* Feature badges - WCAG AA compliant with flair */
     .feature-badge {
         display: inline-flex;
         align-items: center;
-        background: #e0f2f1;
-        color: #00695c;  /* Dark teal - 5.4:1 contrast on light bg */
-        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #e0f7f5 0%, #d0f0ed 100%);
+        color: #005a52 !important;
+        padding: 0.625rem 1.125rem;
         border-radius: 100px;
         font-size: 0.875rem;
         font-weight: 600;
         margin-right: 0.5rem;
         margin-bottom: 0.5rem;
+        border: 1px solid rgba(0, 122, 117, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 122, 117, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 122, 117, 0.15);
     }
 
     /* Results section */
     .results-header {
-        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
+        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
         color: #ffffff;
-        padding: 2rem;
-        border-radius: 16px 16px 0 0;
+        padding: 2.5rem;
+        border-radius: 20px 20px 0 0;
         margin-bottom: 0;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 122, 117, 0.3);
+    }
+
+    .results-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -25%;
+        width: 50%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     }
 
     .results-body {
-        background: white;
-        padding: 2rem;
-        border-radius: 0 0 16px 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background: linear-gradient(180deg, #ffffff 0%, #fafffe 100%);
+        padding: 2.5rem;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 122, 117, 0.1);
+        border-top: none;
     }
 
     /* Decorative dots */
@@ -271,15 +425,40 @@ st.markdown(
 
     /* Radio button styling */
     .stRadio > div {
-        background: white;
+        background: #ffffff !important;
         border-radius: 12px;
         padding: 1rem;
     }
 
+    .stRadio label {
+        color: #1a1a2e !important;
+    }
+
+    .stRadio [data-testid="stMarkdownContainer"] p {
+        color: #1a1a2e !important;
+    }
+
     /* Expander styling */
     .streamlit-expanderHeader {
-        background: white;
+        background: #ffffff !important;
         border-radius: 12px;
+        color: #1a1a2e !important;
+    }
+
+    [data-testid="stExpander"] {
+        background-color: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+    }
+
+    /* Help text / tooltips */
+    .stTooltipIcon {
+        color: #4a5568 !important;
+    }
+
+    /* Placeholder text */
+    input::placeholder, textarea::placeholder {
+        color: #6b7280 !important;
+        opacity: 1 !important;
     }
 
     /* Accessibility enhancements */
@@ -379,11 +558,17 @@ def render_hero():
         # Stats
         st.markdown(
             """
-        <div style="background: linear-gradient(135deg, #007A75 0%, #009690 100%);
-                    border-radius: 16px; padding: 1.5rem; color: white; text-align: center;"
+        <div style="background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
+                    border-radius: 20px; padding: 1.75rem; color: white; text-align: center;
+                    box-shadow: 0 8px 30px rgba(0, 122, 117, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+                    position: relative; overflow: hidden;"
              role="region" aria-label="Statistics">
-            <div style="font-size: 2.5rem; font-weight: 700;">8+</div>
-            <div style="font-size: 0.875rem; color: #ffffff;">Specialized Agents</div>
+            <div style="position: absolute; top: -50%; right: -50%; width: 100%; height: 100%;
+                        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);"></div>
+            <div style="font-size: 2.75rem; font-weight: 700; font-family: 'Inter', sans-serif;
+                        text-shadow: 0 2px 4px rgba(0,0,0,0.1);">8+</div>
+            <div style="font-size: 0.875rem; color: #ffffff; font-weight: 500;
+                        letter-spacing: 0.02em;">Specialized Agents</div>
         </div>
         """,
             unsafe_allow_html=True,
@@ -391,10 +576,15 @@ def render_hero():
         st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
         st.markdown(
             """
-        <div style="background: white; border-radius: 16px; padding: 1.5rem;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #007A75;">5</div>
-            <div style="font-size: 0.875rem; color: #4a5568;">Research Waves</div>
+        <div style="background: linear-gradient(145deg, #ffffff 0%, #f0fdf9 100%);
+                    border-radius: 20px; padding: 1.75rem; text-align: center;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 8px 40px rgba(0, 122, 117, 0.08);
+                    border: 1px solid rgba(0, 122, 117, 0.1);">
+            <div style="font-size: 2.75rem; font-weight: 700; font-family: 'Inter', sans-serif;
+                        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
+                        -webkit-background-clip: text; -webkit-text-fill-color: transparent;">5</div>
+            <div style="font-size: 0.875rem; color: #4a5568; font-weight: 500;
+                        letter-spacing: 0.02em;">Research Waves</div>
         </div>
         """,
             unsafe_allow_html=True,
@@ -632,9 +822,9 @@ def create_intake_form():
     depth = st.radio(
         "Select research depth:",
         options=[
-            ("overview", "🚀 Quick Overview — Solid foundation in ~20 minutes"),
-            ("thorough", "📊 Thorough Analysis — Comprehensive with recommendations (~45 min)"),
-            ("deep_dive", "🔬 Deep Dive — Leave no stone unturned (~90 min)"),
+            ("overview", "🚀 Quick Overview — Key insights and market snapshot"),
+            ("thorough", "📊 Thorough Analysis — Comprehensive findings with strategic recommendations"),
+            ("deep_dive", "🔬 Deep Dive — Exhaustive research leaving no stone unturned"),
         ],
         format_func=lambda x: x[1],
         index=1,

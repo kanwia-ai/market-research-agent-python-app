@@ -96,14 +96,21 @@ Search:
 - Discord/Telegram: servers/groups
 - Niche forums
 
-For each community found, provide:
-- Platform and URL
-- Community size/activity
-- Relevance score (1-5)
-- Sample content showing relevance
-- Key voices to follow
+## CRITICAL: Source Requirements
 
-Return structured JSON with your findings.
+Every community you mention MUST include:
+1. **Direct URL** to the community (e.g., https://reddit.com/r/example)
+2. **Specific post/thread URLs** as evidence of relevance
+3. **Date accessed** for each source
+
+For each community found, provide:
+- Platform and **full URL**
+- Community size/activity with source
+- Relevance score (1-5)
+- **2-3 specific post URLs** showing relevance with quotes
+- Key voices to follow with profile URLs
+
+Return structured JSON with your findings. Every claim needs a URL.
 """
 
 
@@ -117,6 +124,47 @@ class VoiceMiner(SubAgent):
             "quotes, pain points, desires, objections, and language patterns.",
         )
 
+    def build_prompt(self, brief: ResearchBrief) -> str:
+        """Build Voice Miner specific prompt."""
+        return f"""
+You are VoiceMiner, a specialized research agent.
+
+Mission: {self.mission}
+
+## Research Brief
+
+**Target Customer:** {brief.target_customer}
+**Geography:** {brief.geography}
+**Problem:** {brief.offering_problem}
+**Primary Question:** {brief.primary_question}
+
+## Your Task
+
+Find the authentic voice of {brief.target_customer}. Search Reddit, Twitter/X, forums, review sites, and communities for:
+
+1. **Pain Points** - What frustrates them? What do they complain about?
+2. **Desires** - What do they wish existed? What would make their life easier?
+3. **Objections** - What stops them from buying solutions? Price? Trust? Complexity?
+4. **Language** - What words/phrases do they use to describe their problems?
+
+## CRITICAL: Source Requirements
+
+Every quote MUST include:
+1. **Direct URL** to the exact post/comment/review
+2. **Verbatim quote** in quotation marks
+3. **Platform and username** (anonymized if needed)
+4. **Date** of the post
+
+Example format:
+- "I've tried 5 different apps and none of them understand my workflow"
+  - Source: https://reddit.com/r/productivity/comments/abc123
+  - User: u/frustrated_designer, Posted: Jan 2024
+
+Find at least 15-20 real quotes with URLs. Do NOT make up quotes or URLs.
+
+Return structured JSON with categorized quotes and their source URLs.
+"""
+
 
 class PricingIntel(SubAgent):
     """Researches pricing landscape and willingness-to-pay."""
@@ -127,6 +175,49 @@ class PricingIntel(SubAgent):
             mission="Research pricing landscape, economic context, and willingness-to-pay "
             "signals for the target market.",
         )
+
+    def build_prompt(self, brief: ResearchBrief) -> str:
+        """Build Pricing Intel specific prompt."""
+        pricing_model = brief.offering_pricing_model or "Not specified"
+        return f"""
+You are PricingIntel, a specialized research agent.
+
+Mission: {self.mission}
+
+## Research Brief
+
+**Offering:** {brief.offering_what}
+**Target Customer:** {brief.target_customer}
+**Geography:** {brief.geography}
+**Proposed Pricing Model:** {pricing_model}
+
+## Your Task
+
+Research pricing intelligence for {brief.offering_what} targeting {brief.target_customer} in {brief.geography}:
+
+1. **Competitor Pricing** - What do similar solutions cost? Tiers? Features per tier?
+2. **Market Rates** - What's the going rate in this category?
+3. **Willingness to Pay Signals** - What do customers say about pricing in reviews/forums?
+4. **Economic Context** - Average income, spending power, currency considerations
+5. **Price Sensitivity** - What makes customers balk? What do they consider "worth it"?
+
+## CRITICAL: Source Requirements
+
+Every data point MUST include:
+1. **Direct URL** to pricing page, review, or source
+2. **Exact figures** with currency
+3. **Date** the pricing was observed
+
+Example format:
+- Competitor X charges $29/month for basic, $99/month for pro
+  - Source: https://competitorx.com/pricing (accessed Jan 2024)
+- "I'd happily pay $50/month if it actually saved me time"
+  - Source: https://reddit.com/r/example/comments/xyz
+
+Find real pricing data with URLs. Do NOT estimate or guess prices.
+
+Return structured JSON with pricing data and source URLs.
+"""
 
 
 class CompetitorProfiler(SubAgent):
@@ -157,7 +248,7 @@ Mission: {self.mission}
 
 ## Your Task
 
-Start with the known competitors ({competitors_str}) and find more.
+Start with the known competitors ({competitors_str}) and discover additional competitors.
 
 For each competitor, research:
 - Company/person background
@@ -168,9 +259,23 @@ For each competitor, research:
 - Reviews and testimonials
 - Strengths and weaknesses
 
-Analyze gaps and white space opportunities.
+## CRITICAL: Source Requirements
 
-Return structured JSON with your findings.
+Every competitor profile MUST include:
+1. **Website URL** - Main site and specific pages referenced
+2. **Pricing page URL** - Direct link to their pricing
+3. **Review URLs** - Links to G2, Capterra, Trustpilot, Reddit discussions
+4. **Social proof URLs** - Case studies, testimonials with links
+
+Example format:
+- **Competitor X** (https://competitorx.com)
+  - Pricing: $29-99/mo (https://competitorx.com/pricing)
+  - G2 Rating: 4.5/5 (https://g2.com/products/competitorx/reviews)
+  - Key complaint: "Too complex for beginners" (https://reddit.com/r/...)
+
+Find at least 5-10 competitors with full source documentation.
+
+Return structured JSON with competitor profiles and all source URLs.
 """
 
 
@@ -184,6 +289,47 @@ class LocalContext(SubAgent):
             "impact go-to-market strategy.",
         )
 
+    def build_prompt(self, brief: ResearchBrief) -> str:
+        """Build Local Context specific prompt."""
+        return f"""
+You are LocalContext, a specialized research agent.
+
+Mission: {self.mission}
+
+## Research Brief
+
+**Target Customer:** {brief.target_customer}
+**Geography:** {brief.geography}
+**Offering:** {brief.offering_what}
+
+## Your Task
+
+Research geography-specific factors for {brief.geography} that impact go-to-market:
+
+1. **Economic Context** - GDP, average income, spending patterns, currency
+2. **Digital Landscape** - Internet penetration, popular platforms, payment methods
+3. **Cultural Factors** - Business culture, communication preferences, trust signals
+4. **Regulatory Environment** - Relevant regulations, compliance requirements
+5. **Local Competition** - Region-specific competitors or alternatives
+6. **Distribution Channels** - How do people discover/buy similar solutions?
+
+## CRITICAL: Source Requirements
+
+Every insight MUST include:
+1. **Direct URL** to the source (World Bank, Statista, news articles, reports)
+2. **Publication date** of the data
+3. **Specific statistics** with attribution
+
+Example format:
+- Internet penetration in {brief.geography}: 45%
+  - Source: https://datareportal.com/reports/digital-2024-country
+  - Published: January 2024
+
+Use authoritative sources: World Bank, IMF, Statista, government statistics, reputable news.
+
+Return structured JSON with local context data and source URLs.
+"""
+
 
 class TrendDetector(SubAgent):
     """Identifies momentum and timing signals."""
@@ -195,6 +341,50 @@ class TrendDetector(SubAgent):
             "research topic.",
         )
 
+    def build_prompt(self, brief: ResearchBrief) -> str:
+        """Build Trend Detector specific prompt."""
+        return f"""
+You are TrendDetector, a specialized research agent.
+
+Mission: {self.mission}
+
+## Research Brief
+
+**Offering:** {brief.offering_what}
+**Target Customer:** {brief.target_customer}
+**Geography:** {brief.geography}
+**Problem:** {brief.offering_problem}
+
+## Your Task
+
+Identify trends and timing signals for {brief.offering_what}:
+
+1. **Search Trends** - Is interest growing, stable, or declining?
+2. **Industry Reports** - What do analysts say about this market?
+3. **Funding/Investment** - Are VCs investing in this space? Recent raises?
+4. **News Momentum** - Recent articles, product launches, acquisitions
+5. **Social Signals** - Growing communities, viral discussions, influencer interest
+6. **Technology Shifts** - Enabling technologies, platform changes
+
+## CRITICAL: Source Requirements
+
+Every trend MUST include:
+1. **Direct URL** to the source
+2. **Specific data points** (percentages, numbers, dates)
+3. **Publication/observation date**
+
+Example format:
+- Search interest for "AI productivity tools" up 150% YoY
+  - Source: https://trends.google.com/trends/explore?q=ai+productivity
+  - Data as of: January 2024
+- Series A funding in productivity space: $2.3B in 2023
+  - Source: https://news.crunchbase.com/...
+
+Use: Google Trends, Crunchbase, TechCrunch, industry reports, news sources.
+
+Return structured JSON with trends and source URLs.
+"""
+
 
 class OpportunitySynthesizer(SubAgent):
     """Synthesizes all findings into final report."""
@@ -205,6 +395,13 @@ class OpportunitySynthesizer(SubAgent):
             mission="Synthesize findings from all sub-agents into a comprehensive, "
             "professional-grade market research report.",
         )
+
+    async def run(self, brief: ResearchBrief, **kwargs) -> dict:
+        """Execute synthesis with findings from other agents."""
+        findings = kwargs.get("findings", {})
+        prompt = self.build_synthesis_prompt(brief, findings)
+        result = await self._call_api(prompt)
+        return result
 
     def build_synthesis_prompt(self, brief: ResearchBrief, findings: dict) -> str:
         """Build the synthesis prompt with all findings."""
@@ -227,7 +424,7 @@ Mission: {self.mission}
 
 ## Your Task
 
-Synthesize all findings into a professional 15-30 page market research report with:
+Synthesize all findings into a professional market research report with:
 
 1. Executive Summary
 2. Research Methodology
@@ -237,12 +434,28 @@ Synthesize all findings into a professional 15-30 page market research report wi
 6. Pricing & Willingness to Pay
 7. Go-to-Market Considerations
 8. Strategic Recommendations
-9. Appendices
+9. Sources & References
 
-Every claim must be backed by evidence from the findings above.
+## CRITICAL: Citation Requirements
+
+This report MUST include inline citations throughout:
+
+1. **Inline Citations** - Every claim needs a source reference like [1], [2], etc.
+2. **Hyperlinks** - Where possible, make source names clickable: [Source Name](URL)
+3. **Verbatim Quotes** - Include actual quotes from customers in "quotation marks" with attribution
+4. **Sources Section** - End with a numbered list of ALL sources with full URLs
+
+Example formatting:
+- "The market for productivity tools is growing at 15% annually [1]"
+- According to [G2 Reviews](https://g2.com/...), users rate competitor X at 4.2/5
+- One freelance designer noted: "I spend 3 hours a day on admin tasks" [Reddit](https://reddit.com/...)
+
+**DO NOT make claims without sources from the findings above.**
+**DO NOT invent URLs or statistics.**
+
 Focus especially on the primary question: {brief.primary_question}
 
-Return the complete report in markdown format.
+Return the complete report in markdown format with full citations.
 """
 
 
@@ -255,3 +468,63 @@ class SourceVerifier(SubAgent):
             mission="Verify every source cited in the research report. Check that "
             "URLs are accessible and sources support the claims made.",
         )
+
+    async def run(self, brief: ResearchBrief, **kwargs) -> dict:
+        """Execute verification on the synthesized report."""
+        report = kwargs.get("report", {})
+        prompt = self.build_verification_prompt(brief, report)
+        result = await self._call_api(prompt)
+        return result
+
+    def build_verification_prompt(self, brief: ResearchBrief, report: dict) -> str:
+        """Build the verification prompt."""
+        report_text = report.get("response", report.get("report", str(report)))
+
+        return f"""
+You are SourceVerifier, a specialized verification agent.
+
+Mission: {self.mission}
+
+## The Report to Verify
+
+{report_text}
+
+## Your Task
+
+Review the report above and verify its sources:
+
+1. **Extract all URLs** mentioned in the report
+2. **Categorize each source**:
+   - VERIFIED: URL format is valid and claim matches likely source content
+   - QUESTIONABLE: URL format looks suspicious or claim seems unsupported
+   - MISSING: Important claims without any source citation
+
+3. **Flag unsupported claims** - Any statistics, quotes, or facts without sources
+
+4. **Provide a verification score** (0-100) based on:
+   - Percentage of claims with sources
+   - Quality and diversity of sources
+   - Specificity of citations
+
+## Output Format
+
+Return JSON with:
+{{
+  "verification_score": 85,
+  "total_sources_found": 25,
+  "sources": [
+    {{
+      "url": "https://example.com/...",
+      "claim": "The claim this supports",
+      "status": "VERIFIED|QUESTIONABLE|MISSING",
+      "notes": "Any concerns or validation notes"
+    }}
+  ],
+  "unsupported_claims": [
+    "List of claims that need sources"
+  ],
+  "recommendations": [
+    "Suggestions for improving source quality"
+  ]
+}}
+"""
