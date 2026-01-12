@@ -306,9 +306,9 @@ def main():
                 with st.expander("Research Brief (Click to review)", expanded=True):
                     st.markdown(brief.to_markdown())
 
-                st.info("Research would start here. (API integration pending)")
-                # TODO: Uncomment when API is connected
-                # asyncio.run(run_research(brief))
+                # Run the research
+                st.session_state.research_started = True
+                st.session_state.results = asyncio.run(run_research(brief))
 
 
 if __name__ == "__main__":

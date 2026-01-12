@@ -1,6 +1,10 @@
 """Research sub-agents for market research."""
 
+import json
+import os
 from dataclasses import dataclass
+
+import anthropic
 
 from src.models import ResearchBrief
 
@@ -26,9 +30,27 @@ Conduct your research and return structured findings.
 """
 
     async def _call_api(self, prompt: str) -> dict:
-        """Call the Anthropic API. Override in subclasses or mock in tests."""
-        # This will be implemented with actual API call
-        return {}
+        """Call the Anthropic API."""
+        client = anthropic.Anthropic(
+            api_key=os.environ.get("ANTHROPIC_API_KEY", "")
+        )
+
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=8192,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        # Extract text from response
+        text = response.content[0].text
+
+        # Try to parse as JSON, otherwise wrap in dict
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {"response": text}
 
     async def run(self, brief: ResearchBrief, **kwargs) -> dict:
         """Execute the agent's research task."""
