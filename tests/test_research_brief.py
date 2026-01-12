@@ -1,6 +1,5 @@
 """Tests for ResearchBrief data structure."""
 
-import pytest
 from src.models import ResearchBrief
 
 
