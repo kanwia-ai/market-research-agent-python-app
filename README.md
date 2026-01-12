@@ -23,8 +23,8 @@ A Python/Streamlit application that conducts comprehensive market research using
 
 ```bash
 # Clone the repository
-git clone https://github.com/kanwia-ai/market-research-app.git
-cd market-research-app
+git clone https://github.com/kanwia-ai/market-research-agent-python-app.git
+cd market-research-agent-python-app
 
 # Create virtual environment
 python -m venv venv
