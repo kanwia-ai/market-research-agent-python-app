@@ -8,7 +8,6 @@ import anthropic
 
 from src.models import ResearchBrief
 
-
 # Depth-based search configuration
 # Based on Anthropic's deep research protocol: multi-round, iterative, exhaustive
 SEARCH_CONFIG = {

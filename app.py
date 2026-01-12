@@ -6,6 +6,12 @@ import streamlit as st
 
 from src.models import ResearchBrief
 from src.orchestrator import ResearchOrchestrator
+from src.export import (
+    export_to_pdf,
+    export_to_docx,
+    create_asset_bundle,
+    get_filename_from_title,
+)
 
 # Page config
 st.set_page_config(
@@ -960,6 +966,83 @@ async def run_research(brief: ResearchBrief):
                 st.json(verification)
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+        # Export section
+        st.markdown("---")
+        st.markdown("### 📥 Export Your Report")
+
+        # Get report content for export
+        report_content = ""
+        if "OpportunitySynthesizer" in orchestrator.results:
+            report = orchestrator.results["OpportunitySynthesizer"]
+            if isinstance(report, dict) and "report" in report:
+                report_content = report["report"]
+            elif isinstance(report, dict) and "response" in report:
+                report_content = report["response"]
+            else:
+                report_content = str(report)
+
+        # Generate filename from brief
+        report_title = f"market-research-{brief.offering_what[:30]}"
+
+        # Export buttons in columns
+        export_col1, export_col2, export_col3, export_col4 = st.columns(4)
+
+        with export_col1:
+            # PDF Export
+            try:
+                pdf_bytes = export_to_pdf(report_content, report_title)
+                st.download_button(
+                    label="📄 Download PDF",
+                    data=pdf_bytes,
+                    file_name=get_filename_from_title(report_title, "pdf"),
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+            except Exception as e:
+                st.warning(f"PDF export unavailable: {e}")
+
+        with export_col2:
+            # DOCX Export
+            try:
+                docx_bytes = export_to_docx(report_content, report_title)
+                st.download_button(
+                    label="📝 Download Word",
+                    data=docx_bytes,
+                    file_name=get_filename_from_title(report_title, "docx"),
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                )
+            except Exception as e:
+                st.warning(f"Word export unavailable: {e}")
+
+        with export_col3:
+            # Markdown Export
+            st.download_button(
+                label="📋 Download Markdown",
+                data=report_content,
+                file_name=get_filename_from_title(report_title, "md"),
+                mime="text/markdown",
+                use_container_width=True,
+            )
+
+        with export_col4:
+            # Full Asset Bundle (ZIP)
+            try:
+                zip_bytes = create_asset_bundle(
+                    report_content,
+                    raw_findings=orchestrator.results,
+                    title=report_title,
+                )
+                st.download_button(
+                    label="📦 Download All Assets",
+                    data=zip_bytes,
+                    file_name=get_filename_from_title(report_title, "zip"),
+                    mime="application/zip",
+                    use_container_width=True,
+                )
+            except Exception as e:
+                st.warning(f"Asset bundle unavailable: {e}")
 
     return orchestrator.results
 
