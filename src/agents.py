@@ -9,6 +9,97 @@ import anthropic
 from src.models import ResearchBrief
 
 
+# Depth-based search configuration
+# Based on Anthropic's deep research protocol: multi-round, iterative, exhaustive
+SEARCH_CONFIG = {
+    "overview": {
+        "min_sources": 10,
+        "target_sources": 20,
+        "search_rounds": 2,
+        "description": "Quick but thorough initial sweep",
+    },
+    "thorough": {
+        "min_sources": 20,
+        "target_sources": 50,
+        "search_rounds": 4,
+        "description": "Comprehensive multi-round investigation",
+    },
+    "deep_dive": {
+        "min_sources": 50,
+        "target_sources": 100,
+        "search_rounds": 6,
+        "description": "Exhaustive investigation leaving no stone unturned",
+    },
+}
+
+
+def get_vicious_search_instructions(depth: str, agent_type: str) -> str:
+    """Generate aggressive multi-round search instructions based on depth."""
+    config = SEARCH_CONFIG.get(depth, SEARCH_CONFIG["thorough"])
+
+    return f"""
+## VICIOUS SEARCH PROTOCOL — {config['description'].upper()}
+
+You are conducting {depth.replace('_', ' ').upper()} research. Be RELENTLESS.
+
+### Source Requirements
+- **MINIMUM:** {config['min_sources']} unique, verified sources with URLs
+- **TARGET:** {config['target_sources']}+ sources for excellence
+- **SEARCH ROUNDS:** {config['search_rounds']} iterative rounds
+
+### Multi-Round Search Strategy
+
+**Round 1 — Initial Sweep:**
+- Cast wide net with primary search queries
+- Document ALL relevant sources found
+- Note promising leads for deeper investigation
+
+**Round 2 — Follow the Leads:**
+- For EACH promising source from Round 1, investigate further
+- Find sources CITED BY your initial sources (source pyramiding)
+- Expand query terms based on terminology discovered
+
+**Round 3+ — Exhaustive Coverage:**
+- Search variations: synonyms, related terms, regional variations
+- Check competitor mentions, industry reports, academic sources
+- Mine social platforms: Reddit threads, Twitter discussions, LinkedIn posts
+- Find niche forums, Slack communities, Discord servers
+- Search in different date ranges to find historical context
+
+### Query Expansion Techniques
+- Start: "[main topic] [geography]"
+- Expand: "[related term] [geography] [year]"
+- Deepen: "[specific company/person mentioned] review"
+- Pyramid: Search for sources cited in articles you find
+
+### Source Diversity Requirements
+Gather sources from MULTIPLE categories:
+- Social media discussions (Reddit, Twitter/X, LinkedIn)
+- Review platforms (G2, Capterra, Trustpilot, app stores)
+- Industry publications and reports
+- News articles and press releases
+- Company websites and pricing pages
+- Government/institutional data
+- Academic papers (if relevant)
+- Forum discussions and community posts
+- YouTube comments and video descriptions
+- Podcast transcripts and show notes
+
+### CRITICAL: No Source = No Claim
+- Every single data point needs a URL
+- If you can't find a source, DON'T include the claim
+- Quality sources only — no guessing, no fabricating
+- Include access date for time-sensitive data
+
+### Stopping Criteria
+Do NOT stop searching until you have:
+✓ At least {config['min_sources']} verified sources with URLs
+✓ Sources from at least 5 different platform types
+✓ Completed all {config['search_rounds']} search rounds
+✓ Exhausted obvious query variations
+"""
+
+
 @dataclass
 class SubAgent:
     """Base class for research sub-agents."""
@@ -16,17 +107,24 @@ class SubAgent:
     name: str
     mission: str = ""
 
+    def get_search_config(self, depth: str) -> dict:
+        """Get search configuration for the given depth."""
+        return SEARCH_CONFIG.get(depth, SEARCH_CONFIG["thorough"])
+
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build the prompt for this agent given a research brief."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         return f"""
 You are {self.name}, a specialized research agent.
 
 Mission: {self.mission}
 
+{search_instructions}
+
 Research Brief:
 {brief.to_markdown()}
 
-Conduct your research and return structured findings.
+Conduct your research and return structured findings with ALL source URLs.
 """
 
     async def _call_api(self, prompt: str) -> dict:
@@ -71,10 +169,13 @@ class CommunityMapper(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Community Mapper specific prompt."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         return f"""
 You are CommunityMapper, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
@@ -126,10 +227,13 @@ class VoiceMiner(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Voice Miner specific prompt."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         return f"""
 You are VoiceMiner, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
@@ -178,11 +282,14 @@ class PricingIntel(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Pricing Intel specific prompt."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         pricing_model = brief.offering_pricing_model or "Not specified"
         return f"""
 You are PricingIntel, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
@@ -232,12 +339,15 @@ class CompetitorProfiler(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Competitor Profiler specific prompt with known competitors."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         competitors_str = ", ".join(brief.known_competitors) if brief.known_competitors else "None specified"
 
         return f"""
 You are CompetitorProfiler, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
@@ -291,10 +401,13 @@ class LocalContext(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Local Context specific prompt."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         return f"""
 You are LocalContext, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
@@ -343,10 +456,13 @@ class TrendDetector(SubAgent):
 
     def build_prompt(self, brief: ResearchBrief) -> str:
         """Build Trend Detector specific prompt."""
+        search_instructions = get_vicious_search_instructions(brief.depth, self.name)
         return f"""
 You are TrendDetector, a specialized research agent.
 
 Mission: {self.mission}
+
+{search_instructions}
 
 ## Research Brief
 
