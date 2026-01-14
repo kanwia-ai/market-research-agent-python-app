@@ -227,7 +227,7 @@ Conduct your research and return structured findings with ALL source URLs.
         )
 
         response = client.messages.create(
-            model="claude-opus-4-20250514",
+            model="claude-sonnet-4-20250514",
             max_tokens=8192,
             messages=[
                 {"role": "user", "content": prompt}
