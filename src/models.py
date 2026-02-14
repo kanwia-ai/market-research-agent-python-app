@@ -47,6 +47,51 @@ class ResearchBrief:
     # Metadata
     depth: str = "thorough"  # overview, thorough, deep_dive
 
+    def __post_init__(self):
+        """Validate fields after initialization."""
+        # Validate required string fields are non-empty
+        required_fields = {
+            "offering_what": "What you're building",
+            "offering_problem": "Problem it solves",
+            "target_customer": "Target customer",
+            "geography": "Geography/market",
+            "primary_question": "Primary research question",
+        }
+        for field_name, label in required_fields.items():
+            value = getattr(self, field_name)
+            if not isinstance(value, str):
+                raise TypeError(f"{label} must be a string, got {type(value).__name__}")
+            stripped = value.strip()
+            if not stripped:
+                raise ValueError(f"{label} cannot be empty")
+            # Store stripped version
+            object.__setattr__(self, field_name, stripped)
+
+        # Validate depth
+        valid_depths = {"overview", "thorough", "deep_dive"}
+        if self.depth not in valid_depths:
+            raise ValueError(
+                f"depth must be one of {valid_depths}, got '{self.depth}'"
+            )
+
+        # Strip whitespace from optional string fields
+        optional_str_fields = [
+            "offering_delivery", "offering_pricing_model",
+            "customer_conversations", "segments_include_exclude",
+            "opportunity_thesis", "stage", "resources",
+            "kill_criteria", "already_known",
+        ]
+        for field_name in optional_str_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, str):
+                object.__setattr__(self, field_name, value.strip() or None)
+
+        # Validate known_competitors is a list
+        if not isinstance(self.known_competitors, list):
+            raise TypeError(
+                f"known_competitors must be a list, got {type(self.known_competitors).__name__}"
+            )
+
     def to_dict(self) -> dict:
         """Serialize to dictionary for passing to agents."""
         return asdict(self)

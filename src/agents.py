@@ -1,12 +1,35 @@
 """Research sub-agents for market research."""
 
 import json
+import logging
 import os
+import time
 from dataclasses import dataclass
 
 import anthropic
+from anthropic import APIError, APITimeoutError, RateLimitError
 
 from src.models import ResearchBrief
+
+logger = logging.getLogger(__name__)
+
+# Configuration — override via environment variables
+MODEL = os.environ.get("RESEARCH_MODEL", "claude-sonnet-4-20250514")
+MAX_TOKENS = int(os.environ.get("RESEARCH_MAX_TOKENS", "8192"))
+MAX_RETRIES = 3
+RETRY_BASE_DELAY = 2  # seconds
+API_TIMEOUT = 120  # seconds
+
+
+def _get_api_key() -> str:
+    """Get and validate the Anthropic API key."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "ANTHROPIC_API_KEY environment variable is not set. "
+            "Set it with: export ANTHROPIC_API_KEY=sk-ant-..."
+        )
+    return api_key
 
 # Research Persona - shared by all agents
 RESEARCH_PERSONA = """
@@ -221,27 +244,104 @@ Conduct your research and return structured findings with ALL source URLs.
 """
 
     async def _call_api(self, prompt: str) -> dict:
-        """Call the Anthropic API."""
-        client = anthropic.Anthropic(
-            api_key=os.environ.get("ANTHROPIC_API_KEY", "")
+        """Call the Anthropic API with retry logic and error handling."""
+        client = anthropic.Anthropic(api_key=_get_api_key())
+
+        last_exception = None
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                logger.info(
+                    "Agent %s calling API (attempt %d/%d, model=%s, max_tokens=%d)",
+                    self.name, attempt, MAX_RETRIES, MODEL, MAX_TOKENS,
+                )
+
+                response = client.messages.create(
+                    model=MODEL,
+                    max_tokens=MAX_TOKENS,
+                    messages=[{"role": "user", "content": prompt}],
+                    timeout=API_TIMEOUT,
+                )
+
+                # Validate response structure
+                if not response.content:
+                    raise ValueError(f"API returned empty content for agent {self.name}")
+
+                content_block = response.content[0]
+                if not hasattr(content_block, "text") or not content_block.text:
+                    raise ValueError(
+                        f"API returned non-text content for agent {self.name}: "
+                        f"{type(content_block).__name__}"
+                    )
+
+                text = content_block.text
+
+                # Extract token usage
+                token_usage = {"input_tokens": 0, "output_tokens": 0}
+                if hasattr(response, "usage"):
+                    token_usage = {
+                        "input_tokens": response.usage.input_tokens,
+                        "output_tokens": response.usage.output_tokens,
+                    }
+                    logger.info(
+                        "Agent %s completed: input_tokens=%d, output_tokens=%d",
+                        self.name,
+                        token_usage["input_tokens"],
+                        token_usage["output_tokens"],
+                    )
+
+                # Try to parse as JSON, otherwise wrap in dict
+                try:
+                    result = json.loads(text)
+                except json.JSONDecodeError:
+                    result = {"response": text}
+
+                # Attach token usage metadata
+                result["_token_usage"] = token_usage
+                return result
+
+            except RateLimitError as e:
+                last_exception = e
+                delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "Agent %s rate limited (attempt %d/%d), retrying in %ds: %s",
+                    self.name, attempt, MAX_RETRIES, delay, e,
+                )
+                time.sleep(delay)
+
+            except APITimeoutError as e:
+                last_exception = e
+                logger.warning(
+                    "Agent %s timed out (attempt %d/%d): %s",
+                    self.name, attempt, MAX_RETRIES, e,
+                )
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_BASE_DELAY)
+
+            except APIError as e:
+                last_exception = e
+                if e.status_code and e.status_code >= 500:
+                    delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    logger.warning(
+                        "Agent %s server error %d (attempt %d/%d), retrying in %ds",
+                        self.name, e.status_code, attempt, MAX_RETRIES, delay,
+                    )
+                    time.sleep(delay)
+                else:
+                    logger.error("Agent %s API error (non-retryable): %s", self.name, e)
+                    raise
+
+            except Exception as e:
+                logger.error("Agent %s unexpected error: %s", self.name, e, exc_info=True)
+                raise
+
+        # All retries exhausted
+        logger.error(
+            "Agent %s failed after %d attempts: %s",
+            self.name, MAX_RETRIES, last_exception,
         )
-
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=8192,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        # Extract text from response
-        text = response.content[0].text
-
-        # Try to parse as JSON, otherwise wrap in dict
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return {"response": text}
+        raise RuntimeError(
+            f"Agent {self.name} failed after {MAX_RETRIES} attempts: {last_exception}"
+        ) from last_exception
 
     async def run(self, brief: ResearchBrief, **kwargs) -> dict:
         """Execute the agent's research task."""

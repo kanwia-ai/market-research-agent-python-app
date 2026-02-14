@@ -1,6 +1,7 @@
 """Streamlit UI for the Market Research Agent."""
 
 import asyncio
+import os
 
 import streamlit as st
 
@@ -21,508 +22,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Custom CSS for Quantilope-inspired design
+@st.cache_resource
+def _load_css() -> str:
+    """Load CSS from external file, cached across reruns."""
+    css_path = os.path.join(os.path.dirname(__file__), "assets", "styles.css")
+    with open(css_path) as f:
+        return f.read()
+
+
+# Apply styles from external CSS file
 st.markdown(
-    """
+    f"""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-    /* Apply Inter font globally */
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-    /* Main theme colors - WCAG 2.1 AA compliant */
-    :root {
-        --primary-teal: #007A75;  /* Darkened for better contrast */
-        --primary-dark: #006560;
-        --text-dark: #1a1a2e;
-        --text-secondary: #4a5568;  /* 7:1 contrast on white */
-        --bg-light: #f8fafa;
-        --white: #ffffff;
-    }
-
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-
-    /* Force light theme with subtle gradient background */
-    .stApp, .main, [data-testid="stAppViewContainer"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f0fdf9 50%, #ecfdf5 100%) !important;
-        background-attachment: fixed !important;
-    }
-
-    [data-testid="stSidebar"] {
-        background-color: #f8fafa !important;
-    }
-
-    /* Decorative background pattern */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle at center, rgba(0, 122, 117, 0.08) 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .stApp::after {
-        content: '';
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle at center, rgba(0, 150, 144, 0.06) 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    /* Force text colors on all elements */
-    .stApp, .main, p, span, div, label, h1, h2, h3, h4, h5, h6 {
-        color: #1a1a2e !important;
-    }
-
-    /* Override Streamlit's default label styling */
-    .stTextInput label, .stTextArea label, .stSelectbox label, .stRadio label {
-        color: #1a1a2e !important;
-        font-weight: 500 !important;
-    }
-
-    /* Main container styling */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-        background-color: #ffffff !important;
-    }
-
-    /* Hero section */
-    .hero-title {
-        font-size: 3.25rem;
-        font-weight: 700;
-        color: #1a1a2e !important;
-        margin-bottom: 0.75rem;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
-    }
-
-    .hero-subtitle {
-        font-size: 1.25rem;
-        color: #4a5568 !important;
-        margin-bottom: 2rem;
-        font-weight: 400;
-        line-height: 1.6;
-    }
-
-    .teal-accent {
-        color: #007A75 !important;
-        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    /* Card styling - elevated with depth */
-    .intake-card {
-        background: linear-gradient(145deg, #ffffff 0%, #fafffe 100%);
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow:
-            0 4px 6px rgba(0, 122, 117, 0.04),
-            0 10px 40px rgba(0, 122, 117, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(0, 122, 117, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .intake-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #007A75, #00a896, #007A75);
-        background-size: 200% 100%;
-    }
-
-    .card-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid rgba(0, 122, 117, 0.1);
-    }
-
-    .card-icon {
-        width: 52px;
-        height: 52px;
-        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        font-size: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 122, 117, 0.3);
-    }
-
-    .card-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1a1a2e;
-        margin: 0;
-    }
-
-    .card-subtitle {
-        font-size: 0.875rem;
-        color: #5a6777;  /* WCAG AA compliant - 5.5:1 contrast on white */
-        margin: 0;
-    }
-
-    /* Stats section */
-    .stats-container {
-        display: flex;
-        gap: 2rem;
-        margin: 2rem 0;
-    }
-
-    .stat-box {
-        background: linear-gradient(135deg, #007A75 0%, #009690 100%);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        text-align: center;
-        flex: 1;
-        color: #ffffff;
-    }
-
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
-        color: #ffffff;  /* Full white for accessibility */
-    }
-
-    /* Progress wave styling */
-    .wave-item {
-        display: flex;
-        align-items: center;
-        padding: 1.125rem 1.5rem;
-        background: linear-gradient(145deg, #ffffff 0%, #fafffe 100%);
-        border-radius: 14px;
-        margin-bottom: 0.75rem;
-        border-left: 5px solid #e0e7e6;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
-
-    .wave-item.running {
-        border-left-color: #007A75;
-        background: linear-gradient(145deg, #e8f7f6 0%, #d8f3f1 100%);
-        box-shadow: 0 4px 15px rgba(0, 122, 117, 0.15);
-        animation: pulse-border 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-border {
-        0%, 100% { border-left-color: #007A75; }
-        50% { border-left-color: #00a896; }
-    }
-
-    .wave-item.complete {
-        border-left-color: #007A75;
-        background: linear-gradient(145deg, #f0fdf9 0%, #e8f7f6 100%);
-    }
-
-    .wave-item.error {
-        border-left-color: #dc2626;
-        background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
-    }
-
-    .wave-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        font-size: 1.125rem;
-    }
-
-    /* Button styling - WCAG AA compliant with polish */
-    .stButton > button {
-        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
-        color: #ffffff !important;
-        border: none;
-        border-radius: 14px;
-        padding: 1rem 3rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        font-family: 'Inter', sans-serif !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow:
-            0 4px 15px rgba(0, 122, 117, 0.35),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s ease;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow:
-            0 8px 25px rgba(0, 122, 117, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        background: linear-gradient(135deg, #006963 0%, #007A75 100%);
-    }
-
-    .stButton > button:hover::before {
-        left: 100%;
-    }
-
-    .stButton > button:focus {
-        outline: 3px solid #007A75;
-        outline-offset: 3px;
-    }
-
-    .stButton > button:active {
-        transform: translateY(-1px);
-    }
-
-    /* Input styling - force light backgrounds */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    .stSelectbox > div > div > div {
-        border-radius: 10px;
-        border: 2px solid #d1d5db !important;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        background-color: #ffffff !important;
-        color: #1a1a2e !important;
-    }
-
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #007A75 !important;
-        box-shadow: 0 0 0 3px rgba(0, 122, 117, 0.2);
-        outline: none;
-    }
-
-    /* Selectbox dropdown styling */
-    .stSelectbox > div > div {
-        background-color: #ffffff !important;
-    }
-
-    .stSelectbox [data-baseweb="select"] {
-        background-color: #ffffff !important;
-    }
-
-    .stSelectbox [data-baseweb="select"] > div {
-        background-color: #ffffff !important;
-        color: #1a1a2e !important;
-    }
-
-    /* Section divider */
-    .section-divider {
-        height: 2px;
-        background: linear-gradient(90deg, transparent 0%, rgba(0, 122, 117, 0.2) 25%, rgba(0, 122, 117, 0.3) 50%, rgba(0, 122, 117, 0.2) 75%, transparent 100%);
-        margin: 3rem 0;
-        border-radius: 2px;
-    }
-
-    /* Feature badges - WCAG AA compliant with flair */
-    .feature-badge {
-        display: inline-flex;
-        align-items: center;
-        background: linear-gradient(135deg, #e0f7f5 0%, #d0f0ed 100%);
-        color: #005a52 !important;
-        padding: 0.625rem 1.125rem;
-        border-radius: 100px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        border: 1px solid rgba(0, 122, 117, 0.15);
-        box-shadow: 0 2px 8px rgba(0, 122, 117, 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .feature-badge:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 122, 117, 0.15);
-    }
-
-    /* Results section */
-    .results-header {
-        background: linear-gradient(135deg, #007A75 0%, #00a896 100%);
-        color: #ffffff;
-        padding: 2.5rem;
-        border-radius: 20px 20px 0 0;
-        margin-bottom: 0;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 122, 117, 0.3);
-    }
-
-    .results-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -25%;
-        width: 50%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    }
-
-    .results-body {
-        background: linear-gradient(180deg, #ffffff 0%, #fafffe 100%);
-        padding: 2.5rem;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 122, 117, 0.1);
-        border-top: none;
-    }
-
-    /* Decorative dots */
-    .decorative-dots {
-        position: fixed;
-        top: 100px;
-        right: 50px;
-        width: 200px;
-        height: 200px;
-        opacity: 0.1;
-        z-index: -1;
-    }
-
-    /* Phase label */
-    .phase-label {
-        background: #007A75;
-        color: #ffffff;
-        padding: 0.25rem 0.75rem;
-        border-radius: 100px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Radio button styling */
-    .stRadio > div {
-        background: #ffffff !important;
-        border-radius: 12px;
-        padding: 1rem;
-    }
-
-    .stRadio label {
-        color: #1a1a2e !important;
-    }
-
-    .stRadio [data-testid="stMarkdownContainer"] p {
-        color: #1a1a2e !important;
-    }
-
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: #ffffff !important;
-        border-radius: 12px;
-        color: #1a1a2e !important;
-    }
-
-    [data-testid="stExpander"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
-    }
-
-    /* Help text / tooltips */
-    .stTooltipIcon {
-        color: #4a5568 !important;
-    }
-
-    /* Placeholder text */
-    input::placeholder, textarea::placeholder {
-        color: #6b7280 !important;
-        opacity: 1 !important;
-    }
-
-    /* Accessibility enhancements */
-    /* Ensure focus is visible on all interactive elements */
-    a:focus, button:focus, input:focus, textarea:focus, select:focus {
-        outline: 3px solid #007A75;
-        outline-offset: 2px;
-    }
-
-    /* Ensure sufficient line height for readability */
-    p, li, label {
-        line-height: 1.6;
-    }
-
-    /* Skip link for keyboard navigation */
-    .skip-link {
-        position: absolute;
-        top: -40px;
-        left: 0;
-        background: #007A75;
-        color: #ffffff;
-        padding: 8px 16px;
-        z-index: 100;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .skip-link:focus {
-        top: 0;
-    }
-
-    /* Ensure placeholder text has sufficient contrast */
-    ::placeholder {
-        color: #6b7280;  /* 4.5:1 contrast ratio */
-        opacity: 1;
-    }
-
-    /* High contrast mode support */
-    @media (prefers-contrast: high) {
-        .intake-card {
-            border: 2px solid #1a1a2e;
-        }
-        .wave-item {
-            border-left-width: 6px;
-        }
-    }
-
-    /* Reduced motion support */
-    @media (prefers-reduced-motion: reduce) {
-        .stButton > button,
-        .wave-item {
-            transition: none;
-        }
-        .stButton > button:hover {
-            transform: none;
-        }
-    }
-</style>
+<style>{_load_css()}</style>
 """,
     unsafe_allow_html=True,
 )
@@ -896,17 +410,14 @@ def display_progress(wave_index: int, wave_name: str, status: str):
     )
 
 
-async def run_research(brief: ResearchBrief):
-    """Run the research and display progress."""
+async def run_research(brief: ResearchBrief) -> dict:
+    """Run the research with progress display. Returns results dict."""
     orchestrator = ResearchOrchestrator()
 
     progress_placeholder = st.empty()
-    results_placeholder = st.empty()
-
     wave_statuses = ["pending"] * 5
 
     for wave_idx in range(5):
-        # Update status to running
         wave_statuses[wave_idx] = "running"
 
         with progress_placeholder.container():
@@ -927,7 +438,6 @@ async def run_research(brief: ResearchBrief):
             for idx, status in enumerate(wave_statuses):
                 display_progress(idx, orchestrator.get_wave_description(idx), status)
 
-        # Run the wave
         try:
             await orchestrator.run_wave(wave_idx, brief)
             wave_statuses[wave_idx] = "complete"
@@ -935,179 +445,261 @@ async def run_research(brief: ResearchBrief):
             wave_statuses[wave_idx] = "error"
             st.error(f"Error in {orchestrator.get_wave_description(wave_idx)}: {e}")
 
-    # Display final results
-    with results_placeholder.container():
-        st.markdown(
-            """
-        <div class="results-header" role="banner">
-            <h2 style="margin: 0; font-size: 1.5rem; color: #ffffff;">Research Complete</h2>
-            <p style="margin: 0.5rem 0 0 0; color: #ffffff;">
-                Your professional market research report is ready
-            </p>
+    return orchestrator.results
+
+
+def _build_brief(data: dict) -> ResearchBrief:
+    """Build a ResearchBrief from intake form data."""
+    return ResearchBrief(
+        offering_what=data["offering_what"],
+        offering_problem=data["offering_problem"],
+        target_customer=data["target_customer"],
+        geography=data["geography"],
+        primary_question=data["primary_question"],
+        offering_delivery=data["offering_delivery"],
+        offering_pricing_model=data["offering_pricing_model"],
+        customer_conversations=data["customer_conversations"],
+        segments_include_exclude=data["segments_include_exclude"],
+        known_competitors=data["known_competitors"],
+        opportunity_thesis=data["opportunity_thesis"],
+        stage=data["stage"],
+        resources=data["resources"],
+        kill_criteria=data["kill_criteria"],
+        already_known=data["already_known"],
+        depth=data["depth"],
+    )
+
+
+def display_confirmation(brief: ResearchBrief):
+    """Show confirmation step before starting research."""
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+    <div class="intake-card">
+        <div class="card-header">
+            <div class="card-icon">📋</div>
+            <div>
+                <p class="card-title">Review Your Research Brief</p>
+                <p class="card-subtitle">Please confirm before starting research</p>
+            </div>
         </div>
-        """,
-            unsafe_allow_html=True,
-        )
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
-        st.markdown("<div class='results-body'>", unsafe_allow_html=True)
+    st.markdown(brief.to_markdown())
 
-        if "OpportunitySynthesizer" in orchestrator.results:
-            report = orchestrator.results["OpportunitySynthesizer"]
-            if isinstance(report, dict) and "report" in report:
-                st.markdown(report["report"])
-            elif isinstance(report, dict) and "response" in report:
-                st.markdown(report["response"])
-            else:
-                st.json(report)
+    # Estimated time based on depth
+    time_estimates = {
+        "overview": "2-3 minutes",
+        "thorough": "4-6 minutes",
+        "deep_dive": "8-12 minutes",
+    }
+    est_time = time_estimates.get(brief.depth, "4-6 minutes")
 
-        if "SourceVerifier" in orchestrator.results:
-            verification = orchestrator.results["SourceVerifier"]
-            with st.expander("🔍 Source Verification Details"):
-                st.json(verification)
+    st.info(f"Estimated time: **{est_time}** | Depth: **{brief.depth.replace('_', ' ').title()}**")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1, 1])
 
-        # Export section
-        st.markdown("---")
-        st.markdown("### 📥 Export Your Report")
+    with col1:
+        if st.button("Confirm & Start Research", type="primary", use_container_width=True):
+            st.session_state.view = "running"
+            st.rerun()
 
-        # Get report content for export
-        report_content = ""
-        if "OpportunitySynthesizer" in orchestrator.results:
-            report = orchestrator.results["OpportunitySynthesizer"]
-            if isinstance(report, dict) and "report" in report:
-                report_content = report["report"]
-            elif isinstance(report, dict) and "response" in report:
-                report_content = report["response"]
-            else:
-                report_content = str(report)
+    with col2:
+        if st.button("Edit Brief", use_container_width=True):
+            st.session_state.view = "intake"
+            st.rerun()
 
-        # Generate filename from brief
-        report_title = f"market-research-{brief.offering_what[:30]}"
+    with col3:
+        if st.button("Cancel", use_container_width=True):
+            st.session_state.view = "intake"
+            st.session_state.intake_data = None
+            st.rerun()
 
-        # Export buttons in columns
-        export_col1, export_col2, export_col3, export_col4 = st.columns(4)
 
-        with export_col1:
-            # PDF Export
-            try:
-                pdf_bytes = export_to_pdf(report_content, report_title)
-                st.download_button(
-                    label="📄 Download PDF",
-                    data=pdf_bytes,
-                    file_name=get_filename_from_title(report_title, "pdf"),
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.warning(f"PDF export unavailable: {e}")
+def display_results():
+    """Display research results and export options from session state."""
+    results = st.session_state.results
+    brief = st.session_state.brief
 
-        with export_col2:
-            # DOCX Export
-            try:
-                docx_bytes = export_to_docx(report_content, report_title)
-                st.download_button(
-                    label="📝 Download Word",
-                    data=docx_bytes,
-                    file_name=get_filename_from_title(report_title, "docx"),
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.warning(f"Word export unavailable: {e}")
+    st.markdown(
+        """
+    <div class="results-header" role="banner">
+        <h2 style="margin: 0; font-size: 1.5rem; color: #ffffff;">Research Complete</h2>
+        <p style="margin: 0.5rem 0 0 0; color: #ffffff;">
+            Your professional market research report is ready
+        </p>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
-        with export_col3:
-            # Markdown Export
+    st.markdown("<div class='results-body'>", unsafe_allow_html=True)
+
+    if "OpportunitySynthesizer" in results:
+        report = results["OpportunitySynthesizer"]
+        if isinstance(report, dict) and "report" in report:
+            st.markdown(report["report"])
+        elif isinstance(report, dict) and "response" in report:
+            st.markdown(report["response"])
+        else:
+            st.json(report)
+
+    if "SourceVerifier" in results:
+        verification = results["SourceVerifier"]
+        with st.expander("Source Verification Details"):
+            st.json(verification)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Export section
+    st.markdown("---")
+    st.markdown("### Export Your Report")
+
+    # Get report content for export
+    report_content = ""
+    if "OpportunitySynthesizer" in results:
+        report = results["OpportunitySynthesizer"]
+        if isinstance(report, dict) and "report" in report:
+            report_content = report["report"]
+        elif isinstance(report, dict) and "response" in report:
+            report_content = report["response"]
+        else:
+            report_content = str(report)
+
+    report_title = f"market-research-{brief.offering_what[:30]}"
+
+    export_col1, export_col2, export_col3, export_col4 = st.columns(4)
+
+    with export_col1:
+        try:
+            pdf_bytes = export_to_pdf(report_content, report_title)
             st.download_button(
-                label="📋 Download Markdown",
-                data=report_content,
-                file_name=get_filename_from_title(report_title, "md"),
-                mime="text/markdown",
+                label="Download PDF",
+                data=pdf_bytes,
+                file_name=get_filename_from_title(report_title, "pdf"),
+                mime="application/pdf",
                 use_container_width=True,
             )
+        except Exception as e:
+            st.warning(f"PDF export unavailable: {e}")
 
-        with export_col4:
-            # Full Asset Bundle (ZIP)
-            try:
-                zip_bytes = create_asset_bundle(
-                    report_content,
-                    raw_findings=orchestrator.results,
-                    title=report_title,
-                )
-                st.download_button(
-                    label="📦 Download All Assets",
-                    data=zip_bytes,
-                    file_name=get_filename_from_title(report_title, "zip"),
-                    mime="application/zip",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.warning(f"Asset bundle unavailable: {e}")
+    with export_col2:
+        try:
+            docx_bytes = export_to_docx(report_content, report_title)
+            st.download_button(
+                label="Download Word",
+                data=docx_bytes,
+                file_name=get_filename_from_title(report_title, "docx"),
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+            )
+        except Exception as e:
+            st.warning(f"Word export unavailable: {e}")
 
-    return orchestrator.results
+    with export_col3:
+        st.download_button(
+            label="Download Markdown",
+            data=report_content,
+            file_name=get_filename_from_title(report_title, "md"),
+            mime="text/markdown",
+            use_container_width=True,
+        )
+
+    with export_col4:
+        try:
+            zip_bytes = create_asset_bundle(
+                report_content,
+                raw_findings=results,
+                title=report_title,
+            )
+            st.download_button(
+                label="Download All Assets",
+                data=zip_bytes,
+                file_name=get_filename_from_title(report_title, "zip"),
+                mime="application/zip",
+                use_container_width=True,
+            )
+        except Exception as e:
+            st.warning(f"Asset bundle unavailable: {e}")
+
+    # Start new research button
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Start New Research", type="primary", use_container_width=True):
+            for key in ["view", "intake_data", "brief", "results"]:
+                st.session_state.pop(key, None)
+            st.rerun()
 
 
 # Main app flow
 def main():
-    """Main application flow."""
+    """Main application flow with state machine.
+
+    Views: intake -> confirm -> running -> results
+    """
 
     # Initialize session state
-    if "research_started" not in st.session_state:
-        st.session_state.research_started = False
-    if "results" not in st.session_state:
-        st.session_state.results = None
+    if "view" not in st.session_state:
+        st.session_state.view = "intake"
 
-    # Hero section
+    view = st.session_state.view
+
+    # Always show hero
     render_hero()
 
-    # Intake form
-    intake_data = create_intake_form()
+    if view == "intake":
+        # Show intake form
+        intake_data = create_intake_form()
 
-    # Confirmation section
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 2, 1])
-
-    with col2:
-        start_button = st.button(
-            "🚀 Start Research",
-            type="primary",
-            use_container_width=True,
-        )
-
-    if start_button:
-        errors = validate_intake(intake_data)
-        if errors:
-            for error in errors:
-                st.error(error)
-        else:
-            # Create brief
-            brief = ResearchBrief(
-                offering_what=intake_data["offering_what"],
-                offering_problem=intake_data["offering_problem"],
-                target_customer=intake_data["target_customer"],
-                geography=intake_data["geography"],
-                primary_question=intake_data["primary_question"],
-                offering_delivery=intake_data["offering_delivery"],
-                offering_pricing_model=intake_data["offering_pricing_model"],
-                customer_conversations=intake_data["customer_conversations"],
-                segments_include_exclude=intake_data["segments_include_exclude"],
-                known_competitors=intake_data["known_competitors"],
-                opportunity_thesis=intake_data["opportunity_thesis"],
-                stage=intake_data["stage"],
-                resources=intake_data["resources"],
-                kill_criteria=intake_data["kill_criteria"],
-                already_known=intake_data["already_known"],
-                depth=intake_data["depth"],
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            start_button = st.button(
+                "Start Research",
+                type="primary",
+                use_container_width=True,
             )
 
-            # Show brief summary
-            with st.expander("📋 Research Brief Summary", expanded=False):
-                st.markdown(brief.to_markdown())
+        if start_button:
+            errors = validate_intake(intake_data)
+            if errors:
+                for error in errors:
+                    st.error(error)
+            else:
+                st.session_state.intake_data = intake_data
+                st.session_state.brief = _build_brief(intake_data)
+                st.session_state.view = "confirm"
+                st.rerun()
 
-            # Run the research
-            st.session_state.research_started = True
-            st.session_state.results = asyncio.run(run_research(brief))
+    elif view == "confirm":
+        brief = st.session_state.get("brief")
+        if brief is None:
+            st.session_state.view = "intake"
+            st.rerun()
+        display_confirmation(brief)
+
+    elif view == "running":
+        brief = st.session_state.get("brief")
+        if brief is None:
+            st.session_state.view = "intake"
+            st.rerun()
+
+        results = asyncio.run(run_research(brief))
+        st.session_state.results = results
+        st.session_state.view = "results"
+        st.rerun()
+
+    elif view == "results":
+        if st.session_state.get("results") is None:
+            st.session_state.view = "intake"
+            st.rerun()
+        display_results()
 
 
 if __name__ == "__main__":
