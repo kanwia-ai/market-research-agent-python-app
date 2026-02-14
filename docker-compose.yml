@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RESEARCH_MODEL=${RESEARCH_MODEL:-claude-sonnet-4-20250514}
+      - RESEARCH_MAX_TOKENS=${RESEARCH_MAX_TOKENS:-8192}
+      - RESEARCH_TOKEN_BUDGET=${RESEARCH_TOKEN_BUDGET:-0}
+    volumes:
+      - .:/app
+    restart: unless-stopped

@@ -1,6 +1,6 @@
 # Market Research App — Principal Engineer Improvement Plan
 **Date:** 2026-02-14
-**Status:** Mostly Complete (13/16 items done)
+**Status:** COMPLETE (15/16 items done, 1 deferred)
 
 ## Overview
 Comprehensive hardening of the market research app based on Opus 4.6 principal engineer review. Focus areas: error handling, security, UI architecture, observability, and production readiness.
@@ -62,7 +62,7 @@ Comprehensive hardening of the market research app based on Opus 4.6 principal e
 
 ---
 
-## Phase 3: Hardening (Medium) — MOSTLY COMPLETE
+## Phase 3: Hardening (Medium) — COMPLETE
 
 ### 3.1 Make Model Configurable ✅
 **File:** `src/agents.py`
@@ -83,33 +83,42 @@ Comprehensive hardening of the market research app based on Opus 4.6 principal e
 - Nested lists (`  - ` / `    - `) → List Bullet 2/3 styles
 - 20 new tests covering all three features
 
-### 3.4 Validate Agent Result Schemas ⏳ NOT STARTED
-**File:** `src/orchestrator.py`
-- Define expected result structure per agent type
-- Validate before passing to synthesizer/verifier
+### 3.4 Validate Agent Result Schemas ✅
+**Files:** `src/schemas.py`, `src/orchestrator.py`
+- `AGENT_SCHEMAS` dict with expected keys per agent type
+- `validate_agent_result()` returns warnings (never raises)
+- Integrated into `run_wave()` — logs warnings for unexpected/empty results
+- 37 new tests in `tests/test_schemas.py`
 
 ---
 
-## Phase 4: Production Readiness (Lower) — PARTIALLY COMPLETE
+## Phase 4: Production Readiness (Lower) — COMPLETE
 
 ### 4.1 Add CI/CD Pipeline ✅
 **File:** `.github/workflows/ci.yml`
 - Lint (ruff) + test (pytest) jobs on Python 3.12
 - Runs on PR + push to main
 
-### 4.2 Add Docker Support ⏳ NOT STARTED
-- `Dockerfile` for Streamlit app (includes WeasyPrint system deps)
-- `docker-compose.yml` for local dev
+### 4.2 Add Docker Support ✅
+**Files:** `Dockerfile`, `docker-compose.yml`, `.dockerignore`
+- `python:3.12-slim` base with WeasyPrint system deps
+- Health check on Streamlit's `/_stcore/health`
+- Compose passes through all env vars with defaults
+- `.dockerignore` excludes tests, docs, caches, .env
 
 ### 4.3 Add .env Support ✅
 **File:** `.env.example`
 - Documents ANTHROPIC_API_KEY (required)
 - Documents RESEARCH_MODEL, RESEARCH_MAX_TOKENS, RESEARCH_TOKEN_BUDGET (optional)
 
-### 4.4 Improve Source Verification ⏳ NOT STARTED
-**File:** `src/agents.py`
-- Add HTTP HEAD requests to verify URLs actually exist
-- Flag dead links in verification report
+### 4.4 Improve Source Verification ✅
+**Files:** `src/source_checker.py`, `src/orchestrator.py`, `requirements.txt`
+- `aiohttp`-based HTTP HEAD requests (falls back to GET on 405)
+- `extract_urls()` regex extracts all URLs from report text
+- Concurrent checking with semaphore (max 10 parallel)
+- Integrated into `run_all()` after Wave 5, results stored as `_source_check`
+- Logs dead/invalid URLs as warnings
+- 15 new tests in `tests/test_source_checker.py`
 
 ---
 
@@ -119,24 +128,34 @@ Comprehensive hardening of the market research app based on Opus 4.6 principal e
 |-------|-------|------|--------|
 | Phase 1: Critical | 4 | 4 | **COMPLETE** |
 | Phase 2: UI | 4 | 3 | Componentize deferred |
-| Phase 3: Hardening | 4 | 3 | Schema validation pending |
-| Phase 4: Production | 4 | 2 | Docker + source verification pending |
-| **Total** | **16** | **12** | **75%** |
+| Phase 3: Hardening | 4 | 4 | **COMPLETE** |
+| Phase 4: Production | 4 | 4 | **COMPLETE** |
+| **Total** | **16** | **15** | **94%** |
 
 ### Tests
-- **68 tests passing** (up from 48 original)
+- **120 tests passing** (up from 48 original)
 - 20 new tests for DOCX export improvements
+- 37 new tests for agent result schema validation
+- 15 new tests for HTTP source verification
 
 ### Files Changed
 - `src/agents.py` — error handling, retry, config constants, token usage
-- `src/orchestrator.py` — wave failure handling, token budget, logging
+- `src/orchestrator.py` — wave failure handling, token budget, logging, schema validation, source checking
 - `src/models.py` — input validation
 - `src/export.py` — logging, inline formatting, tables, nested lists
 - `app.py` — CSS extraction, state machine, confirmation step (1,115 → 706 lines)
+- `requirements.txt` — added aiohttp dependency
 
 ### Files Created
 - `assets/styles.css` — extracted CSS (494 lines)
 - `assets/__init__.py` — package init
+- `src/schemas.py` — agent result schema validation
+- `src/source_checker.py` — HTTP source URL verification
+- `tests/test_schemas.py` — 37 schema validation tests
+- `tests/test_source_checker.py` — 15 source checker tests
+- `Dockerfile` — Streamlit app container with WeasyPrint deps
+- `docker-compose.yml` — local dev compose config
+- `.dockerignore` — Docker build context exclusions
 - `.env.example` — environment variable docs
 - `.github/workflows/ci.yml` — CI pipeline
 - `docs/plans/2026-02-14-principal-engineer-improvements.md` — this file

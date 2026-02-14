@@ -17,6 +17,7 @@ from src.agents import (
     VoiceMiner,
 )
 from src.models import ResearchBrief
+from src.schemas import validate_agent_result
 
 logger = logging.getLogger(__name__)
 
@@ -169,6 +170,10 @@ class ResearchOrchestrator:
                 logger.info("Agent %s completed successfully", agent_name)
                 # Extract token usage metadata before storing results
                 self._extract_token_usage(agent_name, result)
+                # Validate result schema
+                validation_warnings = validate_agent_result(agent_name, result)
+                for warning in validation_warnings:
+                    logger.warning("Schema validation: %s", warning)
                 wave_results[agent_name] = result
                 self.results[agent_name] = result
 
@@ -224,6 +229,24 @@ class ResearchOrchestrator:
             )
             if on_wave_complete:
                 on_wave_complete(wave_idx, wave_results)
+
+        # HTTP source verification on the final report
+        synthesizer_result = self.results.get("OpportunitySynthesizer", {})
+        report_text = synthesizer_result.get("response", synthesizer_result.get("report", ""))
+        if report_text and isinstance(report_text, str):
+            try:
+                from src.source_checker import verify_report_sources
+                source_check = await verify_report_sources(report_text)
+                self.results["_source_check"] = source_check
+                if source_check.get("dead_urls"):
+                    logger.warning(
+                        "Found %d dead/invalid URLs in report",
+                        len(source_check["dead_urls"]),
+                    )
+                    for dead in source_check["dead_urls"]:
+                        logger.warning("  Dead URL: %s (status=%s)", dead["url"], dead.get("status_code"))
+            except Exception as e:
+                logger.warning("HTTP source verification failed: %s", e)
 
         # Log final token usage summary and estimated cost
         total_input = sum(
